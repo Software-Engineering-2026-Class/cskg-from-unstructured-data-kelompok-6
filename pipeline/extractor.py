@@ -49,7 +49,7 @@ def get_extraction_chain():
         print("Please ensure your .env file is correct.")
         return
 
-    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash-lite")
+    llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite")
     # Define the output parser based on our Pydantic model
     parser = PydanticOutputParser(pydantic_object=CyberEntities)
 
