@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import redis
 import json
 import time
+import requests
+
 
 # --- Configuration ---
 RSS_FEEDS = {
@@ -44,6 +46,58 @@ def fetch_articles(feed_url, max_articles=5):
         )
     return articles
 
+def fetch_nvd_articles(max_articles=5):
+    """Fetches recent CVE descriptions from the NVD API."""
+    print("Fetching articles from: NVD CVE API")
+    url = "https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=10"
+    try:
+        response = requests.get(url, timeout=10)
+        data = response.json()
+        articles = []
+        for vuln in data.get("vulnerabilities", [])[:max_articles]:
+            cve = vuln["cve"]
+            cve_id = cve["id"]
+            description = cve.get("descriptions", [{}])[0].get("value", "No description.")
+            articles.append({
+                "title": cve_id,
+                "link": f"https://nvd.nist.gov/vuln/detail/{cve_id}",
+                "published": cve.get("published", "N/A"),
+                "content": description,
+            })
+        return articles
+    except Exception as e:
+        print(f"NVD fetch failed: {e}")
+        return []
+
+
+def fetch_malwarebazaar(max_articles=5):
+    """Fetches recent malware reports from MalwareBazaar."""
+    print("Fetching articles from: MalwareBazaar API")
+    url = "https://mb-api.abuse.ch/api/v1/"
+    try:
+        response = requests.post(url, data={"query": "get_recent", "selector": "100"}, timeout=10)
+        data = response.json()
+        articles = []
+        for sample in data.get("data", [])[:max_articles]:
+            malware_name = sample.get("signature") or sample.get("tags", ["unknown"])[0]
+            sha256 = sample.get("sha256_hash", "")
+            content = (
+                f"Malware: {malware_name}. "
+                f"File type: {sample.get('file_type', 'N/A')}. "
+                f"Tags: {', '.join(sample.get('tags') or [])}. "
+                f"Reporter: {sample.get('reporter', 'N/A')}."
+            )
+            articles.append({
+                "title": f"MalwareBazaar: {malware_name} ({sha256[:16]}...)",
+                "link": f"https://bazaar.abuse.ch/sample/{sha256}",
+                "published": sample.get("first_seen", "N/A"),
+                "content": content,
+            })
+        return articles
+    except Exception as e:
+        print(f"MalwareBazaar fetch failed: {e}")
+        return []
+
 
 def connect_to_redis():
     """Connects to Redis with retries."""
@@ -64,6 +118,8 @@ def run_producer():
     all_articles = []
     for _, url in RSS_FEEDS.items():
         all_articles.extend(fetch_articles(url, MAX_ARTICLES_PER_FEED))
+    all_articles.extend(fetch_nvd_articles(MAX_ARTICLES_PER_FEED))
+    all_articles.extend(fetch_malwarebazaar(MAX_ARTICLES_PER_FEED))
 
     new_articles_pushed = 0
     for article in all_articles:
