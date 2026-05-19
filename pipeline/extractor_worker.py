@@ -4,7 +4,6 @@ import os
 from pipeline.extractor import get_extraction_chain
 from typing import cast, Tuple, Optional
 from dotenv import load_dotenv
-import time
 
 # Redis connection
 R_HOST = "redis"
@@ -66,7 +65,6 @@ def run_extractor():
             print(
                 f"  [EXTRACTOR] Finished processing. Pushed to '{EXTRACTIONS_QUEUE}'."
             )
-            time.sleep(4)
 
         except Exception as e:
             print(f"Error processing article: {e}")
