@@ -1,18 +1,22 @@
 # Constructing a Cybersecurity Knowledge Graph (CSKG) from Unstructured Data
 
-This project implements an automated data pipeline to construct a Cybersecurity Knowledge Graph (CSKG) from unstructured data sources like security blogs and attack reports. The system scrapes articles, uses an LLM (via LangChain) to extract entities and relations, maps them to a formal ontology (STIX), and stores them in a Virtuoso SPARQL endpoint. The resulting knowledge graph is queryable via a simple REST API.
+This project is a fork of an existing implementation of an automated data pipeline to construct a Cybersecurity Knowledge Graph (CSKG) from unstructured data sources like security blogs and attack reports. It is made as a final project for MRPL (Metode Rekayasa Perangkat Lunak) class.
+
+## 0. Our Team Members
+
+We are Group 6 which includes these amazing guys:
+**1. Anders Emmanuel Tan (24/541351/Pa/22964)**
+**2. Dhimas Early Oceandy (24/533508/Pa/22584)**
+**3. Azhar Maulana (24/533487/Pa/22582)**
+**4. Evan Razzan Adytaputra (24/545257/PA/23166)**
 
 ## 1. Unstructured Sources
 
-The pipeline is designed to process unstructured text from any source. As per the assignment, we have identified the following source types:
-
-1.  **Security News Blogs (RSS):** Continuously updated articles on new threats. (e.g., TheHackerNews, BleepingComputer)
-2.  **Vendor Attack Reports:** In-depth PDFs and blog posts (e.g., from Mandiant, CrowdStrike).
-3.  **CVE Descriptions:** Textual descriptions of vulnerabilities (e.g., from NVD).
-4.  **Threat Intel Tweets:** Short-form, real-time reports from researchers.
-5.  **Malware Analysis Reports:** Technical breakdowns of malware behavior.
-
-The current implementation (`pipeline/scraper.py`) actively scrapes RSS feeds from **TheHackerNews** and **BleepingComputer** as a proof-of-concept.
+Our implementation uses the previously implemented source:
+**Security News Blogs (RSS):**
+as well as 2 additional sources:
+**1. NVD CSE API**
+**2. CIRCL CVE**
 
 ## 2. Ontology
 
