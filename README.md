@@ -5,18 +5,18 @@ This project is a fork of an existing implementation of an automated data pipeli
 ## 0. Our Team Members
 
 We are Group 6 which includes these amazing guys:
-**1. Anders Emmanuel Tan (24/541351/Pa/22964)**
-**2. Dhimas Early Oceandy (24/533508/Pa/22584)**
-**3. Azhar Maulana (24/533487/Pa/22582)**
-**4. Evan Razzan Adytaputra (24/545257/PA/23166)**
+1. **Dhimas Early Oceandy (24/533508/Pa/22584) (PIC)**
+2. **Anders Emmanuel Tan (24/541351/Pa/22964)**
+3. **Azhar Maulana (24/533487/Pa/22582)**
+4. **Evan Razzan Adytaputra (24/545257/PA/23166)**
 
 ## 1. Unstructured Sources
 
-Our implementation uses the previously implemented source:
-**Security News Blogs (RSS):**
+Our implementation uses the previously implemented source
+**Security News Blogs (RSS)**
 as well as 2 additional sources:
-**1. NVD CSE API**
-**2. CIRCL CVE**
+1. **NVD CSE API**
+2. **CIRCL CVE**
 
 ## 2. Ontology
 
