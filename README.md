@@ -5,10 +5,12 @@ This project is a fork of an existing implementation of an automated data pipeli
 ## 0. Our Team Members
 
 We are Group 6 which includes these amazing guys:
-1. **Dhimas Early Oceandy (24/533508/Pa/22584) (PIC)**
-2. **Anders Emmanuel Tan (24/541351/Pa/22964)**
-3. **Azhar Maulana (24/533487/Pa/22582)**
-4. **Evan Razzan Adytaputra (24/545257/PA/23166)**
+| Name     | NIM | Username |
+| ---      | ---       | --- |
+| Dhimas Early Oceandy (PIC) | 24/533508/PA/22584 | EarlyOcean |
+| Anders Emmanuel Tan     | 24/541351/PA/22964 | Plumz17 | 
+| Azhar Maulana | 24/533487/PA/22582 | naa2412 |
+| Evan Razzan Adytaputra | 24/545257/PA/23166| evanrazzanadytaputra2006-dotcom | 
 
 ## 1. Unstructured Sources
 
