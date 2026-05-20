@@ -80,35 +80,49 @@ This project is built as an event-driven, microservice-based pipeline orchestrat
 
 ## 4. Summary/Statistics of Constructed KG
 
-The knowledge graph is dynamic and grows with every new article scraped.
+The knowledge graph is dynamic and grows continuously as new articles are scraped from all configured sources.
 
-* **Live Statistics:** You can get a live count of the total triples in the graph by accessing the API's status endpoint:
-    `GET http://localhost:8000/`
+### 4.1 Live Statistics
 
-* **Automated Strategic Reports:**
-    The system includes an automated analyst that evaluates the graph daily. It aggregates data on all threat actors and their tools to identify global trends.
-    * **Access:** Reports are generated automatically in the `reports/` folder.
-    * **Content:** Each report contains a "Strategic Threat Landscape Assessment," highlighting key active groups and tooling trends.
+Get a real-time triple count via the API:
 
-* **Graph Statistics (Evaluation):** We can run SPARQL queries to get statistics on the constructed graph.
+```
+GET http://localhost:8000/
+```
 
-    **Query to count entities by type:**
+Example response:
+```json
+{
+  "status": "online",
+  "graph_db_backend": "Virtuoso",
+  "sparql_endpoint": "http://virtuoso:8890/sparql",
+  "total_triples": 5863
+}
+```
 
-    ```sparql
-    PREFIX stix: [http://docs.oasis-open.org/cti/ns/stix#](http://docs.oasis-open.org/cti/ns/stix#)
-    PREFIX rdfs: [http://www.w3.org/2000/01/rdf-schema#](http://www.w3.org/2000/01/rdf-schema#)
+### 4.2 Generating Statistics & Visualizations
 
-    SELECT (str(?type) as ?EntityType) (COUNT(DISTINCT ?s) as ?Count)
-    WHERE {
-      GRAPH [http://group2.org/cskg](http://group2.org/cskg) {
-        ?s a ?type .
-        # Filter for only STIX types
-        FILTER(CONTAINS(str(?type), "stix"))
-      }
-    }
-    GROUP BY ?type
-    ORDER BY DESC(?Count)
-    ```
+We provide a dedicated statistics script that queries the live Virtuoso endpoint and generates charts automatically.
+
+```bash
+# Install dependencies
+pip install rdflib matplotlib requests
+
+# Generate statistics and charts
+mkdir kg_charts
+python kg_stats.py --sparql http://localhost:8890/sparql --out kg_charts
+
+# Open the interactive dashboard
+# Double-click kg_dashboard.html in your file explorer
+```
+
+#### Known Issues & Limitations
+
+- **Entity disambiguation**: The same threat actor may appear under multiple labels (e.g., `"APT29"` vs `"Cozy Bear"`) due to LLM variability — no deduplication/coreference resolution is currently implemented.
+- **Relation sparsity**: Not all extracted entities receive relations — some appear only as isolated nodes when the LLM fails to identify a clear relationship.
+- **Source imbalance**: RSS feed articles dominate the graph; NVD and CIRCL CVE entries contribute primarily `stix:Vulnerability` nodes with fewer interconnections.
+- **Temporal coverage**: The graph reflects articles from the pipeline's runtime period only — no historical backfill.
+
 
 ## 5. Linking to Existing KGs
 
