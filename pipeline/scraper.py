@@ -70,34 +70,35 @@ def fetch_nvd_articles(max_articles=5):
         return []
 
 
-def fetch_malwarebazaar(max_articles=5):
-    """Fetches recent malware reports from MalwareBazaar."""
-    print("Fetching articles from: MalwareBazaar API")
-    url = "https://mb-api.abuse.ch/api/v1/"
+def fetch_circl_cve(max_articles=5):
+    """Fetches recent CVE records from CIRCL CVE feed."""
+    print("Fetching articles from: CIRCL CVE Feed")
+    url = "https://cve.circl.lu/api/last/10"
     try:
-        response = requests.post(url, data={"query": "get_recent", "selector": "100"}, timeout=10)
+        response = requests.get(url, timeout=10)
         data = response.json()
         articles = []
-        for sample in data.get("data", [])[:max_articles]:
-            malware_name = sample.get("signature") or sample.get("tags", ["unknown"])[0]
-            sha256 = sample.get("sha256_hash", "")
+        for cve in data[:max_articles]:
+            cve_id = cve.get("cveMetadata", {}).get("cveId", "Unknown CVE")
+            descriptions = cve.get("containers", {}).get("cna", {}).get("descriptions", [])
+            summary = descriptions[0].get("value", "No description.") if descriptions else "No description."
+            metrics = cve.get("containers", {}).get("cna", {}).get("metrics", [])
+            cvss = metrics[0].get("cvssV3_1", {}).get("baseScore", "N/A") if metrics else "N/A"
             content = (
-                f"Malware: {malware_name}. "
-                f"File type: {sample.get('file_type', 'N/A')}. "
-                f"Tags: {', '.join(sample.get('tags') or [])}. "
-                f"Reporter: {sample.get('reporter', 'N/A')}."
+                f"Vulnerability: {cve_id}. "
+                f"CVSS Score: {cvss}. "
+                f"Summary: {summary}"
             )
             articles.append({
-                "title": f"MalwareBazaar: {malware_name} ({sha256[:16]}...)",
-                "link": f"https://bazaar.abuse.ch/sample/{sha256}",
-                "published": sample.get("first_seen", "N/A"),
+                "title": cve_id,
+                "link": f"https://cve.circl.lu/cve/{cve_id}",
+                "published": cve.get("cveMetadata", {}).get("datePublished", "N/A"),
                 "content": content,
             })
         return articles
     except Exception as e:
-        print(f"MalwareBazaar fetch failed: {e}")
+        print(f"CIRCL CVE fetch failed: {e}")
         return []
-
 
 def connect_to_redis():
     """Connects to Redis with retries."""
@@ -119,7 +120,8 @@ def run_producer():
     for _, url in RSS_FEEDS.items():
         all_articles.extend(fetch_articles(url, MAX_ARTICLES_PER_FEED))
     all_articles.extend(fetch_nvd_articles(MAX_ARTICLES_PER_FEED))
-    all_articles.extend(fetch_malwarebazaar(MAX_ARTICLES_PER_FEED))
+    all_articles.extend(fetch_circl_cve(MAX_ARTICLES_PER_FEED))
+
 
     new_articles_pushed = 0
     for article in all_articles:
