@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSKG Statistics Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #FAFAFA;
+    --surface: #FFFFFF;
+    --surface2: #F1F2F4;
+    --border: #EAEAEA;
+    --border-hover: #D1D5DB;
+    --text: #11181C;
+    --muted: #687076;
+    
+    --accent: #0070F3;
+    --green: #0E793C;
+    --amber: #B75C00;
+    --red: #CD2B31;
+    --blue: #0068D6;
+    --purple: #6E56CF;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2.5rem;
+    line-height: 1.5;
+  }
+
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem;
+  }
+  .header-left h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+  .header-left p {
+    font-size: 0.875rem;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: #E8F5E9;
+    color: var(--green);
+    border: 1px solid #C8E6C9;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px; 
+    padding: 1.25rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+  }
+  .metric-card:hover { 
+    border-color: var(--border-hover); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  }
+  .metric-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .metric-value {
+    font-family: 'JetBrains Mono', monospace; 
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    line-height: 1;
+  }
+  .metric-sub {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 1.5rem;
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+  }
+  .chart-wrap { position: relative; }
+
+  .eval-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  }
+  .eval-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+  }
+  .eval-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+  .eval-table th {
+    text-align: left;
+    padding: 10px 12px;
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.75rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .eval-table td { 
+    padding: 12px; 
+    border-bottom: 1px solid var(--border); 
+    vertical-align: middle; 
+  }
+  .eval-table tr:last-child td { border-bottom: none; }
+  .eval-table tr:hover td { background: #FAFAFA; }
+  
+  .eval-table td:nth-child(2) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+  }
+
+  .status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+  .chip-ok { background: #E8F5E9; color: var(--green); border: 1px solid #C8E6C9;}
+  .chip-warn { background: #FFF3E0; color: var(--amber); border: 1px solid #FFE0B2;}
+  .chip-err { background: #FFEBEE; color: var(--red); border: 1px solid #FFCDD2;}
+
+  .progress-bar-wrap { display: flex; align-items: center; gap: 10px; }
+  .progress-bar { flex: 1; height: 6px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+  .progress-label { 
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; 
+    color: var(--muted); 
+    min-width: 32px; 
+    text-align: right; 
+  }
+
+  .legend-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 1rem; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  .source-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.5rem; }
+  .source-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .source-chip .count { 
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem; 
+    font-weight: 600; 
+    color: var(--text); 
+  }
+
+  @media (max-width: 768px) {
+    .chart-grid { grid-template-columns: 1fr; }
+    body { padding: 1.5rem; }
+    .metric-value { font-size: 1.75rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>CSKG Statistics Dashboard</h1>
+    <p>Cybersecurity Knowledge Graph — Analisis & Evaluasi KG</p>
+  </div>
+  <span class="badge badge-live"><span class="dot"></span>Live Data</span>
+</div>
+
+<div class="metric-grid">
+  <div class="metric-card">
+    <div class="metric-label">Total Triples</div>
+    <div class="metric-value" id="m-triples">—</div>
+    <div class="metric-sub">RDF statements dalam KG</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Total Entities</div>
+    <div class="metric-value" id="m-entities">—</div>
+    <div class="metric-sub">STIX-typed entities</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Total Relations</div>
+    <div class="metric-value" id="m-relations">—</div>
+    <div class="metric-sub">STIX predicates</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">SEPSES Links</div>
+    <div class="metric-value" id="m-sepses">—</div>
+    <div class="metric-sub">owl:sameAs ke CVE</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Unique Predicates</div>
+    <div class="metric-value" id="m-predicates">—</div>
+    <div class="metric-sub">Jenis predikat unik</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Missing Labels</div>
+    <div class="metric-value" id="m-missing">—</div>
+    <div class="metric-sub">Entitas tanpa rdfs:label</div>
+  </div>
+</div>
+
+<div class="chart-grid">
+  <div class="chart-card full">
+    <div class="chart-title">Distribusi Entitas per Tipe STIX</div>
+    <div class="chart-wrap" style="height:260px;">
+      <canvas id="chartEntities" role="img" aria-label="Bar chart distribusi entitas STIX per tipe"></canvas>
+    </div>
+    <div class="legend-row" id="legend-entities"></div>
+  </div>
+</div>
+
+<div class="chart-grid">
+  <div class="chart-card">
+    <div class="chart-title">Distribusi Relasi STIX</div>
+    <div class="chart-wrap" style="height:240px;">
+      <canvas id="chartRelations" role="img" aria-label="Bar chart relasi STIX dalam KG"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Kelengkapan Label & Konektivitas</div>
+    <div class="chart-wrap" style="height:240px;">
+      <canvas id="chartQuality" role="img" aria-label="Donut chart kualitas KG: label dan konektivitas"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="eval-section">
+  <div class="eval-title">Evaluasi Kualitas Knowledge Graph</div>
+  <table class="eval-table">
+    <thead>
+      <tr>
+        <th>Metrik</th>
+        <th>Nilai</th>
+        <th>Progress</th>
+        <th>Status</th>
+        <th>Keterangan</th>
+      </tr>
+    </thead>
+    <tbody id="eval-tbody"></tbody>
+  </table>
+</div>
+
+<div class="eval-section">
+  <div class="eval-title">Sumber Data</div>
+  <div class="source-chips" id="source-chips"></div>
+</div>
+
+<script src="kg_charts/kg_stats.js"></script> 
+<script>
+const ENTITY_COLORS = {
+  "Threat Actor": "#D93036", // Maturation Red
+  "Malware": "#E54D2E",      // Burnt Orange
+  "Vulnerability": "#F76B15", // Muted Amber
+  "Indicator": "#12A594",    // Muted Teal/Green
+  "Attack Pattern": "#6E56CF", // Corporate Purple
+  "Report": "#0068D6",       // Deep Blue
+  "Tool": "#0091FF",         // Sky Blue
+  "Campaign": "#D6409F",     // Pinkish
+  "Course of Action": "#29A383",
+  "Identity": "#868E96",     // Slate
+};
+
+const REL_COLORS = ["#0068D6", "#12A594", "#F76B15", "#D93036", "#6E56CF", "#0091FF", "#E54D2E", "#868E96"];
+
+// ─── Default data ───
+const DEFAULT_STATS = {
+  total_triples: 1284,
+  total_entities: 312,
+  total_relations: 487,
+  sepses_links: 43,
+  unique_predicates: 14,
+  entities_with_label: 268,
+  entities_without_label: 44,
+  isolated_nodes: 28,
+  entity_counts: {
+    "Threat Actor": 58,
+    "Malware": 74,
+    "Vulnerability": 43,
+    "Indicator": 61,
+    "Attack Pattern": 35,
+    "Report": 28,
+    "Tool": 13,
+  },
+  relation_counts: {
+    "uses": 142,
+    "targets": 89,
+    "exploits": 67,
+    "mentions": 112,
+    "indicates": 45,
+    "related to": 32,
+  },
+  source_breakdown: {
+    "TheHackerNews": 16,
+    "BleepingComputer": 12,
+  }
+};
+
+async function loadStats() {
+  if (typeof KG_DATA !== 'undefined') {
+    return KG_DATA;
+  }
+
+  return DEFAULT_STATS;
+}
+
+function fmt(n) { return Number(n).toLocaleString("id-ID"); }
+
+function renderMetrics(s) {
+  document.getElementById("m-triples").textContent = fmt(s.total_triples);
+  document.getElementById("m-entities").textContent = fmt(s.total_entities);
+  document.getElementById("m-relations").textContent = fmt(s.total_relations);
+  document.getElementById("m-sepses").textContent = fmt(s.sepses_links);
+  document.getElementById("m-predicates").textContent = fmt(s.unique_predicates);
+  document.getElementById("m-missing").textContent = fmt(s.entities_without_label);
+}
+
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = "#687076";
+
+function renderEntityChart(s) {
+  const types = Object.keys(s.entity_counts);
+  const counts = Object.values(s.entity_counts);
+  const colors = types.map(t => ENTITY_COLORS[t] || "#868E96");
+
+  new Chart(document.getElementById("chartEntities"), {
+    type: "bar",
+    data: {
+      labels: types,
+      datasets: [{
+        label: "Jumlah Entitas",
+        data: counts,
+        backgroundColor: colors,
+        borderWidth: 0,
+        borderRadius: 4, // Sedikit membulat tapi tidak ekstrem
+        barPercentage: 0.6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      indexAxis: "y",
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          ticks: { font: { size: 11 } },
+          grid: { color: "#F1F2F4" },
+          border: { display: false }
+        },
+        y: {
+          ticks: { color: "#11181C", font: { size: 12, weight: 500 } },
+          grid: { display: false },
+          border: { display: false }
+        }
+      }
+    }
+  });
+
+  const legend = document.getElementById("legend-entities");
+  types.forEach((t, i) => {
+    const item = document.createElement("div");
+    item.className = "legend-item";
+    item.innerHTML = `<span class="legend-dot" style="background:${colors[i]}"></span>${t} (${counts[i]})`;
+    legend.appendChild(item);
+  });
+}
+
+function renderRelationChart(s) {
+  const rels = Object.keys(s.relation_counts);
+  const counts = Object.values(s.relation_counts);
+  const colors = rels.map((_, i) => REL_COLORS[i % REL_COLORS.length]);
+
+  new Chart(document.getElementById("chartRelations"), {
+    type: "bar",
+    data: {
+      labels: rels,
+      datasets: [{
+        label: "Jumlah Relasi",
+        data: counts,
+        backgroundColor: colors,
+        borderWidth: 0,
+        borderRadius: 4,
+        barPercentage: 0.6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          ticks: { font: { size: 11 }, maxRotation: 45 },
+          grid: { display: false },
+          border: { display: false }
+        },
+        y: {
+          ticks: { font: { size: 11 } },
+          grid: { color: "#F1F2F4" },
+          border: { display: false }
+        }
+      }
+    }
+  });
+}
+
+function renderQualityChart(s) {
+  const labeled = s.entities_with_label;
+  const unlabeled = s.entities_without_label;
+  const total = s.total_entities;
+  const isolated = Math.min(s.isolated_nodes, total);
+  const connected = Math.max(0, total - isolated);
+
+  new Chart(document.getElementById("chartQuality"), {
+    type: "doughnut",
+    data: {
+      datasets: [
+        {
+          label: "Kelengkapan Label",
+          data: [labeled, unlabeled],
+          backgroundColor: ["#12A594", "#E54D2E"],
+          borderWidth: 2,
+          borderColor: "#FFFFFF"
+        },
+        {
+          label: "Konektivitas Node",
+          data: [connected, isolated],
+          backgroundColor: ["#0068D6", "#F76B15"],
+          borderWidth: 2,
+          borderColor: "#FFFFFF",
+          weight: 0.5
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '50%',
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            font: { size: 11 },
+            usePointStyle: true,
+            padding: 15,
+            generateLabels: function(chart) {
+              return [
+                { text: "Punya Label", fillStyle: "#12A594", strokeStyle: "transparent" },
+                { text: "Tanpa Label", fillStyle: "#E54D2E", strokeStyle: "transparent" },
+                { text: "Terhubung", fillStyle: "#0068D6", strokeStyle: "transparent" },
+                { text: "Terisolasi", fillStyle: "#F76B15", strokeStyle: "transparent" }
+              ];
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const datasetLabel = context.dataset.label || '';
+              const value = context.raw;
+              const index = context.dataIndex;
+              const subLabels = context.dataset.label === "Kelengkapan Label" 
+                ? ["Punya Label", "Tanpa Label"] 
+                : ["Terhubung", "Terisolasi"];
+              return `${datasetLabel} - ${subLabels[index]}: ${value}`;
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function renderEvalTable(s) {
+  const total = s.total_entities || 1;
+  const labelPct = Math.round(s.entities_with_label / total * 100);
+  const connectedPct = Math.round((total - s.isolated_nodes) / total * 100);
+  const cveRate = s.total_entities > 0 ? Math.round(s.sepses_links / total * 100) : 0;
+
+  const rows = [
+    {
+      label: "Kelengkapan Label",
+      val: `${s.entities_with_label} / ${total}`,
+      pct: labelPct,
+      color: labelPct > 80 ? "#12A594" : labelPct > 50 ? "#F76B15" : "#D93036",
+      status: labelPct > 80 ? "ok" : labelPct > 50 ? "warn" : "err",
+      statusLabel: labelPct > 80 ? "Baik" : labelPct > 50 ? "Sedang" : "Buruk",
+      note: labelPct < 70 ? "Banyak entitas tidak punya rdfs:label" : "rdfs:label tersedia di mayoritas entitas"
+    },
+    {
+      label: "Konektivitas Node",
+      val: `${total - s.isolated_nodes} / ${total}`,
+      pct: connectedPct,
+      color: connectedPct > 75 ? "#12A594" : connectedPct > 50 ? "#F76B15" : "#D93036",
+      status: connectedPct > 75 ? "ok" : connectedPct > 50 ? "warn" : "err",
+      statusLabel: connectedPct > 75 ? "Baik" : connectedPct > 50 ? "Sedang" : "Buruk",
+      note: s.isolated_nodes > total * 0.2 ? "Banyak node terisolasi — cek relasi" : "Mayoritas node terhubung dalam graf"
+    },
+    {
+      label: "SEPSES CVE Linking",
+      val: `${s.sepses_links} entitas`,
+      pct: cveRate,
+      color: s.sepses_links > 0 ? "#12A594" : "#D93036",
+      status: s.sepses_links > 0 ? "ok" : "err",
+      statusLabel: s.sepses_links > 0 ? "Ada" : "Kosong",
+      note: s.sepses_links === 0 ? "Belum ada link ke SEPSES" : `${s.sepses_links} CVE terhubung ke SEPSES`
+    },
+    {
+      label: "Kepadatan Triple",
+      val: `${s.total_triples} triples`,
+      pct: Math.min(100, Math.round(s.total_triples / 20)),
+      color: s.total_triples > 500 ? "#12A594" : s.total_triples > 100 ? "#F76B15" : "#D93036",
+      status: s.total_triples > 500 ? "ok" : s.total_triples > 100 ? "warn" : "err",
+      statusLabel: s.total_triples > 500 ? "Padat" : s.total_triples > 100 ? "Sedang" : "Tipis",
+      note: s.total_triples < 100 ? "Triple sangat sedikit" : "KG memiliki cukup triple"
+    },
+  ];
+
+  const tbody = document.getElementById("eval-tbody");
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="font-weight:500;color:var(--text);">${r.label}</td>
+      <td>${r.val}</td>
+      <td style="min-width:140px;">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:${r.pct}%;background:${r.color};"></div></div>
+          <span class="progress-label">${r.pct}%</span>
+        </div>
+      </td>
+      <td><span class="status-chip chip-${r.status}">${r.statusLabel}</span></td>
+      <td style="color:var(--muted);">${r.note}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderSources(s) {
+  const chips = document.getElementById("source-chips");
+  const sourceColors = {
+    "TheHackerNews": "#0068D6",
+    "BleepingComputer": "#12A594",
+    "Other": "#6E56CF",
+    "Unknown": "#868E96",
+  };
+  Object.entries(s.source_breakdown).forEach(([name, count]) => {
+    const c = sourceColors[name] || "#868E96";
+    const chip = document.createElement("div");
+    chip.className = "source-chip";
+    chip.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:${c};"></span><span class="count">${count}</span><span style="color:var(--muted);">${name}</span>`;
+    chips.appendChild(chip);
+  });
+}
+
+async function init() {
+  const stats = await loadStats();
+  renderMetrics(stats);
+  renderEntityChart(stats);
+  renderRelationChart(stats);
+  renderQualityChart(stats);
+  renderEvalTable(stats);
+  renderSources(stats);
+}
+
+init();
+</script>
+</body>
+</html>
