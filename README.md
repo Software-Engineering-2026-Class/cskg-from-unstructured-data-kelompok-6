@@ -147,96 +147,176 @@ This ensures that when we add a triple like `(cskg:LockBit, stix:exploits, sepse
 
 ## 6\. Implementation Use Cases
 
-Here are 3 example use cases for our constructed KG, with example queries.
+Here are 3 real-world use cases for the constructed KG. All queries are
+executed against the live Virtuoso endpoint at `http://localhost:8890/sparql`
+and can also be run via `python sparql_demos.py`.
+
+---
 
 ### Use Case 1: Threat Actor Profiling
 
-**Question:** "What malware and attack patterns does the threat actor 'Konni' use, based on recent reports?"
+**Scenario:** A SOC analyst receives an alert mentioning a known threat group.
+They need a full capability profile — all malware, attack patterns, and
+targeted indicators linked to that actor — to prioritise detection rules.
 
 ```sparql
-PREFIX cskg: [http://group2.org/cskg/](http://group2.org/cskg/)
-PREFIX stix: [http://docs.oasis-open.org/cti/ns/stix#](http://docs.oasis-open.org/cti/ns/stix#)
-PREFIX rdfs: [http://www.w3.org/2000/01/rdf-schema#](http://www.w3.org/2000/01/rdf-schema#)
+PREFIX cskg:   <http://group2.org/cskg/>
+PREFIX stix:   <http://docs.oasis-open.org/cti/ns/stix#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT DISTINCT ?malware_label ?pattern_label
+SELECT DISTINCT ?actor_label ?asset_type ?asset_label
 WHERE {
-  GRAPH [http://group2.org/cskg](http://group2.org/cskg) {
-    # Find the Konni threat actor
+  GRAPH <http://group2.org/cskg> {
     ?actor a stix:ThreatActor ;
-           rdfs:label "Konni" .
-    
-    # Find malware it uses
-    OPTIONAL {
-      ?actor stix:uses ?malware .
-      ?malware a stix:Malware ;
-               rdfs:label ?malware_label .
-    }
-    
-    # Find attack patterns it uses
-    OPTIONAL {
-      ?actor stix:uses ?pattern .
-      ?pattern a stix:AttackPattern ;
-               rdfs:label ?pattern_label .
-    }
-  }
-}
-```
-
-### Use Case 2: Vulnerability Impact Assessment
-
-**Question:** "We are vulnerable to 'CVE-2025-12480'. Which threat actors are actively exploiting it?"
-
-```sparql
-PREFIX cskg: [http://group2.org/cskg/](http://group2.org/cskg/)
-PREFIX stix: [http://docs.oasis-open.org/cti/ns/stix#](http://docs.oasis-open.org/cti/ns/stix#)
-PREFIX rdfs: [http://www.w3.org/2000/01/rdf-schema#](http://www.w3.org/2000/01/rdf-schema#)
-PREFIX sepses: [https://w3id.org/sepses/resource/cve/](https://w3id.org/sepses/resource/cve/)
-
-SELECT DISTINCT ?actor_label
-WHERE {
-  GRAPH [http://group2.org/cskg](http://group2.org/cskg) {
-    # Find the CVE (using its linked SEPSES URI)
-    BIND(sepses:CVE-2025-12480 AS ?cve)
-    
-    ?cve a stix:Vulnerability .
-    
-    # Find any threat actor that exploits it
-    ?actor stix:exploits ?cve ;
-           a stix:ThreatActor ;
            rdfs:label ?actor_label .
+
+    { ?actor stix:uses ?asset . ?asset a stix:Malware       ; rdfs:label ?asset_label . BIND("Malware"        AS ?asset_type) }
+    UNION
+    { ?actor stix:uses ?asset . ?asset a stix:AttackPattern ; rdfs:label ?asset_label . BIND("AttackPattern"  AS ?asset_type) }
+    UNION
+    { ?actor stix:targets ?asset . ?asset a stix:Indicator  ; rdfs:label ?asset_label . BIND("Indicator"      AS ?asset_type) }
   }
 }
+ORDER BY ?actor_label ?asset_type ?asset_label
+LIMIT 50
 ```
 
-### Use Case 3: Incident Response & Triage
+**Live Result (from Virtuoso, 2026-05-30):**
 
-**Question:** "We found the indicator 'GlassWorm' in our logs. What is it, and what reports mention it?"
+| actor_label    | asset_type    | asset_label                          |
+|----------------|---------------|--------------------------------------|
+| cybercriminals | AttackPattern | Fraudulent code-signing              |
+| cybercriminals | AttackPattern | fraudulent code-signing              |
+| cybercriminals | Malware       | malware-signing-as-a-service (MSaaS) |
+
+---
+
+### Use Case 2: Vulnerability-to-Threat-Actor Tracing
+
+**Scenario:** The CISO receives a vendor advisory for a newly-patched
+vulnerability. Before patching, the security team queries the CSKG to
+identify which tracked threat actors are actively exploiting it and what
+other tools or IOCs those actors deploy.
 
 ```sparql
-PREFIX cskg: [http://group2.org/cskg/](http://group2.org/cskg/)
-PREFIX stix: [http://docs.oasis-open.org/cti/ns/stix#](http://docs.oasis-open.org/cti/ns/stix#)
-PREFIX rdfs: [http://www.w3.org/2000/01/rdf-schema#](http://www.w3.org/2000/01/rdf-schema#)
+PREFIX cskg:   <http://group2.org/cskg/>
+PREFIX stix:   <http://docs.oasis-open.org/cti/ns/stix#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:    <http://www.w3.org/2002/07/owl#>
 
-SELECT ?entity_label ?entity_type ?report_url
+SELECT DISTINCT ?actor_label ?vuln_label ?ioc_label
 WHERE {
-  GRAPH [http://group2.org/cskg](http://group2.org/cskg) {
-    # Find the entity by its label
-    ?entity rdfs:label "GlassWorm" ;
-            a ?entity_type ;
-            rdfs:label ?entity_label .
-    
-    # Find the report that mentions it
-    ?report stix:mentions ?entity ;
-            a stix:Report .
-    
-    # Get the URL of the report
-    BIND(IRI(str(?report)) as ?report_url)
-    
-    # Filter for only STIX types
-    FILTER(CONTAINS(str(?entity_type), "stix"))
+  GRAPH <http://group2.org/cskg> {
+    # Find canonical actor nodes that exploit a vulnerability
+    ?actor a stix:ThreatActor ;
+           stix:exploits ?vuln .
+    ?vuln  a stix:Vulnerability ;
+           rdfs:label ?vuln_label .
+
+    # Resolve actor label: direct label OR via owl:sameAs alias
+    OPTIONAL { ?actor rdfs:label ?lbl_direct . }
+    OPTIONAL {
+      ?alias owl:sameAs ?actor ;
+             rdfs:label ?lbl_alias .
+    }
+    BIND(COALESCE(?lbl_direct, ?lbl_alias,
+         REPLACE(str(?actor), "http://group2.org/cskg/", "")) AS ?actor_label)
+
+    # Optional: IOCs or Malware the actor deploys
+    OPTIONAL {
+      ?actor stix:uses ?ioc .
+      { ?ioc a stix:Indicator . } UNION { ?ioc a stix:Malware . }
+      ?ioc rdfs:label ?ioc_label .
+    }
   }
 }
+ORDER BY ?actor_label ?vuln_label
+LIMIT 60
 ```
+
+**Live Result (from Virtuoso, 2026-05-30):**
+
+| actor_label              | vuln_label                                         | ioc_label |
+|--------------------------|----------------------------------------------------|-----------|
+| unauthenticated attackers | ChromaDB FastAPI vulnerability                    | —         |
+| unauthenticated attackers | ChromaDB arbitrary code execution vulnerability   | —         |
+| unauthenticated attackers | max-severity vulnerability in ChromaDB            | —         |
+
+> **Note:** The `owl:sameAs` pattern is required here because the canonical
+> (lowercase) actor nodes hold all STIX relationships, while human-readable
+> `rdfs:label` values are stored on the raw alias nodes linked via
+> `owl:sameAs`. This is a known graph modelling choice documented in Section 4.2.
+
+---
+
+### Use Case 3: Campaign Timeline & Report Provenance
+
+**Scenario:** An incident responder is building a post-incident review
+timeline. They query which published reports reference a threat actor,
+what malware/CVEs each report surfaces, and the chronological order — so
+intrusion activity can be correlated with public disclosure dates.
+
+```sparql
+PREFIX cskg:   <http://group2.org/cskg/>
+PREFIX stix:   <http://docs.oasis-open.org/cti/ns/stix#>
+PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT DISTINCT ?actor_label ?report_url ?entity_label ?entity_type
+WHERE {
+  GRAPH <http://group2.org/cskg> {
+    ?actor a stix:ThreatActor ;
+           rdfs:label ?actor_label .
+
+    ?report a stix:Report ;
+            stix:mentions ?actor .
+
+    OPTIONAL {
+      ?report stix:mentions ?entity .
+      ?entity a ?entity_type ;
+              rdfs:label ?entity_label .
+      FILTER(?entity != ?actor)
+      FILTER(CONTAINS(str(?entity_type), "stix"))
+    }
+
+    BIND(str(?report) AS ?report_url)
+  }
+}
+ORDER BY ?actor_label ?report_url
+LIMIT 60
+```
+
+**Live Result (from Virtuoso, 2026-05-30):**
+
+| actor_label    | report_url                                                                                                                            | entity_label                         | entity_type          |
+|----------------|---------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|----------------------|
+| cybercriminals | https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/ | Fraudulent code-signing              | stix:AttackPattern   |
+| cybercriminals | https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/ | Malware-signing-as-a-service         | stix:AttackPattern   |
+| cybercriminals | https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/ | malware-signing-as-a-service         | stix:AttackPattern   |
+| cybercriminals | https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/ | Malware-signing-as-a-service         | stix:Malware         |
+| cybercriminals | https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/ | malware-signing-as-a-service         | stix:Malware         |
+| cybercriminals | https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/ | malware-signing-as-a-service (MSaaS) | stix:Malware         |
+| cybercriminals | https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/ | code-signing                         | stix:AttackPattern   |
+| cybercriminals | https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/ | fraudulent code-signing              | stix:AttackPattern   |
+
+---
+
+### Running All Demos
+
+To reproduce all 3 use cases against a running stack:
+
+```bash
+# Ensure the stack is running
+docker compose up -d
+
+# Run all demos and save JSON output
+python sparql_demos.py --sparql http://localhost:8890/sparql --json-out results.json
+```
+
+Or open `sparql_demo_ui.html` in a browser for an interactive interface.
+
+**Screenshot — Live Demo Output:**
+
+![SPARQL demo terminal output](docs/sparql_demo_output.png)
 
 ## 7\. Constructed KG (RDF/Turtle File)
 

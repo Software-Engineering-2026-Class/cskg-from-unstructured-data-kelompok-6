@@ -33,6 +33,7 @@ PREFIXES = """
 PREFIX cskg:   <http://group2.org/cskg/>
 PREFIX stix:   <http://docs.oasis-open.org/cti/ns/stix#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:    <http://www.w3.org/2002/07/owl#>
 PREFIX sepses: <https://w3id.org/sepses/resource/cve/>
 PREFIX xsd:    <http://www.w3.org/2001/XMLSchema#>
 """
@@ -152,45 +153,59 @@ LIMIT 50
 
 
 # ===========================================================================
-# USE CASE 2 — CVE-to-IOC Tracing
+# USE CASE 2 — Vulnerability-to-Threat-Actor Tracing
 # ===========================================================================
 
 UC2_DESCRIPTION = """\
-Use Case 2: CVE-to-IOC Tracing
---------------------------------
-Question: "Which threat actors exploit a specific CVE, and what indicators
-of compromise (IOCs) are associated with those actors?"
+Use Case 2: Vulnerability-to-Threat-Actor Tracing
+--------------------------------------------------
+Question: "Which threat actors are actively exploiting known vulnerabilities
+in our graph, and what other tools or IOCs do those actors use?"
 
-Scenario: The CISO receives a vendor advisory for a newly-patched CVE.
-Before patching, they want to know whether any active threat actors in the
-graph are exploiting it and what IOCs defenders should immediately hunt for.
+Scenario: The CISO receives a vendor advisory for a newly-patched
+vulnerability. Before patching, the security team queries the CSKG to
+identify whether any tracked threat actors are exploiting it, and what
+other indicators or attack tools are associated with those actors.
 
 The query walks:
-  CVE  <-- stix:exploits --  ThreatActor  -- stix:uses -->  Indicator
-using the linked SEPSES URI for CVE identity.
+  Vulnerability  <-- stix:exploits --  ThreatActor  --> (IOC / Malware)
+
+Note: Actor labels are resolved via owl:sameAs aliases (canonical nodes
+hold relationships; labelled nodes are linked via owl:sameAs).
 """
 
 UC2_QUERY = f"""
 SELECT DISTINCT
-    ?cve_id
     ?actor_label
-    ?indicator_label
+    ?vuln_label
+    ?ioc_label
 WHERE {{
   GRAPH <{CSKG_GRAPH}> {{
+    # Find canonical actor nodes that exploit a vulnerability
     ?actor a stix:ThreatActor ;
-           rdfs:label ?actor_label .
+           stix:exploits ?vuln .
+    ?vuln  a stix:Vulnerability ;
+           rdfs:label ?vuln_label .
 
-    ?actor stix:exploits ?cve .
-    BIND(REPLACE(str(?cve), "https://w3id.org/sepses/resource/cve/", "") AS ?cve_id)
-
+    # Resolve actor label: direct label OR via owl:sameAs alias
+    OPTIONAL {{ ?actor rdfs:label ?lbl_direct . }}
     OPTIONAL {{
-      ?actor stix:uses ?indicator .
-      ?indicator a stix:Indicator ;
-                 rdfs:label ?indicator_label .
+      ?alias owl:sameAs ?actor ;
+             rdfs:label ?lbl_alias .
+    }}
+    # Fallback: derive readable name from URI local name
+    BIND(COALESCE(?lbl_direct, ?lbl_alias,
+         REPLACE(str(?actor), "http://group2.org/cskg/", "")) AS ?actor_label)
+
+    # Optional: IOCs or Malware the actor deploys
+    OPTIONAL {{
+      ?actor stix:uses ?ioc .
+      {{ ?ioc a stix:Indicator . }} UNION {{ ?ioc a stix:Malware . }}
+      ?ioc rdfs:label ?ioc_label .
     }}
   }}
 }}
-ORDER BY ?cve_id ?actor_label
+ORDER BY ?actor_label ?vuln_label
 LIMIT 60
 """
 
@@ -250,9 +265,9 @@ LIMIT 60
 # ===========================================================================
 
 USE_CASES = [
-    ("Use Case 1: Threat Actor Profiling",          UC1_DESCRIPTION, UC1_QUERY),
-    ("Use Case 2: CVE-to-IOC Tracing",              UC2_DESCRIPTION, UC2_QUERY),
-    ("Use Case 3: Campaign Timeline & Provenance",  UC3_DESCRIPTION, UC3_QUERY),
+    ("Use Case 1: Threat Actor Profiling",                     UC1_DESCRIPTION, UC1_QUERY),
+    ("Use Case 2: Vulnerability-to-Threat-Actor Tracing",      UC2_DESCRIPTION, UC2_QUERY),
+    ("Use Case 3: Campaign Timeline & Provenance",             UC3_DESCRIPTION, UC3_QUERY),
 ]
 
 

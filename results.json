@@ -21,9 +21,22 @@
     ]
   },
   {
-    "use_case": "Use Case 2: CVE-to-IOC Tracing",
-    "description": "Use Case 2: CVE-to-IOC Tracing\n--------------------------------\nQuestion: \"Which threat actors exploit a specific CVE, and what indicators\nof compromise (IOCs) are associated with those actors?\"\n\nScenario: The CISO receives a vendor advisory for a newly-patched CVE.\nBefore patching, they want to know whether any active threat actors in the\ngraph are exploiting it and what IOCs defenders should immediately hunt for.\n\nThe query walks:\n  CVE  <-- stix:exploits --  ThreatActor  -- stix:uses -->  Indicator\nusing the linked SEPSES URI for CVE identity.\n",
-    "results": []
+    "use_case": "Use Case 2: Vulnerability-to-Threat-Actor Tracing",
+    "description": "Use Case 2: Vulnerability-to-Threat-Actor Tracing\n--------------------------------------------------\nQuestion: \"Which threat actors are actively exploiting known vulnerabilities\nin our graph, and what other tools or IOCs do those actors use?\"\n\nScenario: The CISO receives a vendor advisory for a newly-patched\nvulnerability. Before patching, the security team queries the CSKG to\nidentify whether any tracked threat actors are exploiting it, and what\nother indicators or attack tools are associated with those actors.\n\nThe query walks:\n  Vulnerability  <-- stix:exploits --  ThreatActor  --> (IOC / Malware)\n\nNote: Actor labels are resolved via owl:sameAs aliases (canonical nodes\nhold relationships; labelled nodes are linked via owl:sameAs).\n",
+    "results": [
+      {
+        "actor_label": "unauthenticated attackers",
+        "vuln_label": "ChromaDB FastAPI vulnerability"
+      },
+      {
+        "actor_label": "unauthenticated attackers",
+        "vuln_label": "ChromaDB arbitrary code execution vulnerability"
+      },
+      {
+        "actor_label": "unauthenticated attackers",
+        "vuln_label": "max-severity vulnerability in ChromaDB"
+      }
+    ]
   },
   {
     "use_case": "Use Case 3: Campaign Timeline & Provenance",
@@ -32,7 +45,31 @@
       {
         "actor_label": "cybercriminals",
         "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "malware-signing-as-a-service",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
         "entity_label": "Malware-signing-as-a-service",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "malware-signing-as-a-service",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "Malware-signing-as-a-service",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "fraudulent code-signing",
         "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
       },
       {
@@ -44,7 +81,7 @@
       {
         "actor_label": "cybercriminals",
         "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "Malware-signing-as-a-service",
+        "entity_label": "malware-signing-as-a-service (MSaaS)",
         "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
       },
       {
@@ -52,30 +89,6 @@
         "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
         "entity_label": "code-signing",
         "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
-      },
-      {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "fraudulent code-signing",
-        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
-      },
-      {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "malware-signing-as-a-service",
-        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
-      },
-      {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "malware-signing-as-a-service",
-        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
-      },
-      {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "malware-signing-as-a-service (MSaaS)",
-        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
       }
     ]
   }
