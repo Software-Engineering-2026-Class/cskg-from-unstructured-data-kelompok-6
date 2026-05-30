@@ -1,0 +1,154 @@
+{
+  "generated_at": "2026-05-30T13:57:46.541169",
+  "endpoint": "http://localhost:8890/sparql",
+  "graph": "http://group2.org/cskg",
+  "graph_size": {
+    "total_triples": 382,
+    "unique_subjects": 129,
+    "unique_predicates": 17,
+    "unique_objects_iri": 109,
+    "literal_triples": 111
+  },
+  "derived": {
+    "avg_triples_per_entity": 2.96,
+    "label_coverage_pct": 59.7,
+    "labelled_entities": 77,
+    "isolated_nodes": 52
+  },
+  "entity_distribution": {
+    "ThreatActor": 13,
+    "Malware": 9,
+    "AttackPattern": 34,
+    "Indicator": 9,
+    "Vulnerability": 18,
+    "Report": 26
+  },
+  "relation_distribution": {
+    "uses": 18,
+    "targets": 16,
+    "exploits": 22,
+    "mitigates": 1,
+    "mentions": 80
+  },
+  "top_predicates": [
+    {
+      "predicate": "rdf:type",
+      "count": 109
+    },
+    {
+      "predicate": "rdfs:label",
+      "count": 85
+    },
+    {
+      "predicate": "stix:mentions",
+      "count": 80
+    },
+    {
+      "predicate": "created",
+      "count": 26
+    },
+    {
+      "predicate": "stix:exploits",
+      "count": 22
+    },
+    {
+      "predicate": "stix:uses",
+      "count": 18
+    },
+    {
+      "predicate": "stix:targets",
+      "count": 16
+    },
+    {
+      "predicate": "owl#sameAs",
+      "count": 7
+    },
+    {
+      "predicate": "stix:patched",
+      "count": 5
+    },
+    {
+      "predicate": "stix:disrupted",
+      "count": 3
+    },
+    {
+      "predicate": "stix:reports",
+      "count": 3
+    },
+    {
+      "predicate": "stix:propagated_via",
+      "count": 3
+    },
+    {
+      "predicate": "stix:located_in",
+      "count": 1
+    },
+    {
+      "predicate": "b",
+      "count": 1
+    },
+    {
+      "predicate": "stix:mitigates",
+      "count": 1
+    }
+  ],
+  "top_entities_by_degree": [
+    {
+      "entity": "cisco-asa-and-ftd-firewall-zero-day",
+      "uri": "cisco-asa-and-ftd-firewall-zero-day",
+      "triples": 9
+    },
+    {
+      "entity": "cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware",
+      "uri": "cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware",
+      "triples": 8
+    },
+    {
+      "entity": "trapdoor-android-ad-fraud-scheme-hit.html",
+      "uri": "trapdoor-android-ad-fraud-scheme-hit.html",
+      "triples": 8
+    },
+    {
+      "entity": "max-severity-flaw-in-chromadb-for-ai-apps-allows-server-hijacking",
+      "uri": "max-severity-flaw-in-chromadb-for-ai-apps-allows-server-hijacking",
+      "triples": 8
+    },
+    {
+      "entity": "alleged-kimwolf-botmaster-dort-arrested-charged-in-u-s-and-canada",
+      "uri": "alleged-kimwolf-botmaster-dort-arrested-charged-in-u-s-and-canada",
+      "triples": 7
+    },
+    {
+      "entity": "CVE-1999-0082",
+      "uri": "CVE-1999-0082",
+      "triples": 6
+    },
+    {
+      "entity": "the-new-phishing-click-how-oauth.html",
+      "uri": "the-new-phishing-click-how-oauth.html",
+      "triples": 6
+    },
+    {
+      "entity": "Trapdoor",
+      "uri": "cskg:trapdoor",
+      "triples": 6
+    },
+    {
+      "entity": "new-shai-hulud-malware-wave-compromises-600-npm-packages",
+      "uri": "new-shai-hulud-malware-wave-compromises-600-npm-packages",
+      "triples": 6
+    },
+    {
+      "entity": "dirtydecrypt-poc-released-for-linux.html",
+      "uri": "dirtydecrypt-poc-released-for-linux.html",
+      "triples": 6
+    }
+  ],
+  "linked_data": {
+    "cve_sepses_links": 5,
+    "cve_link_coverage_pct": 27.8
+  },
+  "totals": {
+    "typed_entities": 109
+  }
+}
