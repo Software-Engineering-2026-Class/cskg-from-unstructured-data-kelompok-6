@@ -1,0 +1,148 @@
+@prefix rdf:    <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix skos:   <http://www.w3.org/2004/02/skos/core#> .
+
+@prefix cskg:   <http://group2.org/cskg/> .
+@prefix stix:   <http://docs.oasis-open.org/cti/ns/stix#> .
+@prefix sepses: <https://w3id.org/sepses/vocab/ref/cve#> .
+
+# ============================================================
+#  Ontology Metadata
+# ============================================================
+
+cskg:Ontology a owl:Ontology ;
+    dcterms:title        "CSKG — Cybersecurity Knowledge Graph Ontology (Group 6)" ;
+    dcterms:description  "Formal ontology for the MRPL Group 6 CSKG project. Extends STIX 2.1 with a custom namespace for entities extracted from unstructured cybersecurity sources (RSS feeds, NVD CVE API, CIRCL CVE feed)." ;
+    dcterms:creator      "Group 6 — MRPL, Universitas Gadjah Mada, 2026" ;
+    dcterms:created      "2026-05-30"^^xsd:date ;
+    owl:versionInfo      "1.0" ;
+    rdfs:seeAlso
+        # Upstream STIX 2.1 ontology
+        <http://docs.oasis-open.org/cti/ns/stix#> ,
+        # SEPSES CSKG vocabulary
+        <https://w3id.org/sepses/vocab/ref/cve#> ,
+        # NVD JSON Schema 2.0 (source schema for NVD CVE API)
+        <https://csrc.nist.gov/schema/nvd/api/2.0/cve_api_json_2.0.schema> ,
+        # CVE JSON 5.0 Schema (source schema for CIRCL CVE feed)
+        <https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json> .
+
+# ============================================================
+#  Class Declarations (imported from STIX, used in this graph)
+# ============================================================
+
+stix:ThreatActor a owl:Class ;
+    rdfs:label   "Threat Actor" ;
+    rdfs:comment "An individual, group, organization, or government that operates with malicious intent (STIX 2.1)." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:Malware a owl:Class ;
+    rdfs:label   "Malware" ;
+    rdfs:comment "A type of code that is used to compromise the operations, integrity, or confidentiality of a victim (STIX 2.1)." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:Vulnerability a owl:Class ;
+    rdfs:label   "Vulnerability" ;
+    rdfs:comment "A mistake in software that can be directly used by a hacker to gain access to a system or network (STIX 2.1). CVE instances are linked to the SEPSES CVE KG namespace." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:Indicator a owl:Class ;
+    rdfs:label   "Indicator" ;
+    rdfs:comment "A pattern that can be used to detect suspicious or malicious cyber activity (STIX 2.1). Includes IPs, domains, file hashes." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:AttackPattern a owl:Class ;
+    rdfs:label   "Attack Pattern" ;
+    rdfs:comment "A type of TTP that describes ways that adversaries attempt to compromise targets (STIX 2.1). Maps to MITRE ATT&CK techniques." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:Report a owl:Class ;
+    rdfs:label   "Report" ;
+    rdfs:comment "Collections of threat intelligence focused on one or more topics. In this KG, each source article is a stix:Report." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+# ============================================================
+#  Property Declarations (imported from STIX, used in this graph)
+# ============================================================
+
+stix:uses a owl:ObjectProperty ;
+    rdfs:label   "uses" ;
+    rdfs:comment "Indicates that a ThreatActor, Malware, or Campaign uses a given tool, technique, or infrastructure." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:targets a owl:ObjectProperty ;
+    rdfs:label   "targets" ;
+    rdfs:comment "Indicates that a ThreatActor or Campaign targets a specific identity, sector, or location." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:exploits a owl:ObjectProperty ;
+    rdfs:label   "exploits" ;
+    rdfs:comment "Indicates that a ThreatActor or Malware exploits a given Vulnerability." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:mitigates a owl:ObjectProperty ;
+    rdfs:label   "mitigates" ;
+    rdfs:comment "Indicates that a CourseOfAction mitigates a Vulnerability or AttackPattern." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:mentions a owl:ObjectProperty ;
+    rdfs:label   "mentions" ;
+    rdfs:comment "Custom extension: links a stix:Report to any entity it references." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:attributed_to a owl:ObjectProperty ;
+    rdfs:label   "attributed to" ;
+    rdfs:comment "Indicates attribution of an intrusion set or campaign to a threat actor." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:variant_of a owl:ObjectProperty ;
+    rdfs:label   "variant of" ;
+    rdfs:comment "Indicates that one malware is a variant of another." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+stix:propagated_via a owl:ObjectProperty ;
+    rdfs:label   "propagated via" ;
+    rdfs:comment "Custom extension: indicates the propagation vector for malware or attack patterns." ;
+    rdfs:isDefinedBy <http://docs.oasis-open.org/cti/ns/stix#> .
+
+# ============================================================
+#  Source Data Format Mappings
+#  Documents how NVD and CIRCL schemas map to STIX classes
+# ============================================================
+
+cskg:NVDSourceMapping a owl:Annotation ;
+    rdfs:label   "NVD CVE API — STIX Mapping" ;
+    rdfs:comment """
+        Source schema: NVD JSON 2.0 (https://services.nvd.nist.gov/rest/json/cves/2.0)
+        Mapping:
+          cve.id                   → rdfs:label (e.g. 'CVE-2024-1234')
+          cve.descriptions[0].value → stix:Vulnerability rdfs:label
+          cve.published            → dcterms:created
+          cve.metrics.cvssV3_1.baseScore → (stored in content, not yet as RDF literal)
+        Each CVE is typed as stix:Vulnerability.
+        CVEs matching pattern CVE-YYYY-NNNN are linked to
+        https://w3id.org/sepses/resource/cve/{CVE-ID} (SEPSES KG).
+    """ .
+
+cskg:CIRCLSourceMapping a owl:Annotation ;
+    rdfs:label   "CIRCL CVE Feed — STIX Mapping" ;
+    rdfs:comment """
+        Source schema: CVE JSON 5.0 (https://cve.circl.lu/api/last/N)
+        Mapping:
+          cveMetadata.cveId           → rdfs:label
+          containers.cna.descriptions → stix:Vulnerability rdfs:label
+          cveMetadata.datePublished   → dcterms:created
+          containers.cna.metrics[0].cvssV3_1.baseScore → (stored in content)
+        Each record is typed as stix:Vulnerability.
+        CVE IDs are linked to SEPSES KG when format matches CVE-YYYY-NNNN.
+    """ .
+
+cskg:CWESourceMapping a owl:Annotation ;
+    rdfs:label   "CWE — STIX & SEPSES Mapping" ;
+    rdfs:comment """
+        CWE IDs extracted by the LLM (pattern CWE-NNN) are linked to:
+        https://w3id.org/sepses/resource/cwe/CWE-{ID}
+        and typed as stix:Vulnerability (as CWEs represent weakness classes).
+    """ .

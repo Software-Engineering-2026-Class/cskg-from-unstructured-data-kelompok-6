@@ -14,31 +14,73 @@ We are Group 6 which includes these amazing guys:
 
 ## 1. Unstructured Sources
 
-Our implementation uses the previously implemented source
-**Security News Blogs (RSS)**
-as well as 2 additional sources:
-1. **NVD CSE API**
-2. **CIRCL CVE**
+We use **6 sources** in total: 1 from the original implementation and 5 added by this group. Each was selected for its complementary coverage of the cybersecurity threat landscape.
+
+| # | Source | Type | Access Method | Rationale |
+|---|---|---|---|---|
+| 1 | **TheHackerNews** | RSS Feed | `http://feeds.feedburner.com/TheHackersNews` | Original source; high-volume, broad cybersecurity news covering APTs, malware, and CVEs |
+| 2 | **BleepingComputer** | RSS Feed | `https://www.bleepingcomputer.com/feed/` | Incident-level reporting with rich IOC details (C2 domains, hashes, file names); complements high-level news |
+| 3 | **KrebsOnSecurity** | RSS Feed | `https://krebsonsecurity.com/feed/` | Investigative journalism on cybercrime and threat actors; provides named actor attribution and campaign context |
+| 4 | **FortiGuard Labs** | RSS Feed | `https://filestore.fortinet.com/fortiguard/rss/outbreakalert.xml` | Vendor threat intelligence; provides structured outbreak alerts with technical indicators and severity |
+| 5 | **NVD CVE API** | REST API | `GET https://services.nvd.nist.gov/rest/json/cves/2.0` | NIST's authoritative CVE repository; no API key required; rate limit ~5 req/30s; schema: [NVD JSON 2.0](https://csrc.nist.gov/schema/nvd/api/2.0/cve_api_json_2.0.schema) |
+| 6 | **CIRCL CVE Feed** | REST API | `GET https://cve.circl.lu/api/last/N` | Real-time CVE data from Computer Incident Response Center Luxembourg (CIRCL); no authentication needed; schema: [CVE JSON 5.0](https://github.com/CVEProject/cve-schema) |
+
+All sources are polled every 5 minutes by the `producer` service (`pipeline/scraper.py`). Duplicate articles are filtered using a Redis `seen_urls` set keyed on the source URL.
 
 ## 2. Ontology
 
 We use a hybrid ontology approach, combining a well-established, existing ontology with a custom namespace for our graph.
 
-* **Primary Ontology: STIX 2.1**
-    We use the [STIX (Structured Threat Information Expression)](http://docs.oasis-open.org/cti/ns/stix#) namespace as our primary ontology. It is the industry standard for cybersecurity threat intelligence. Our `pipeline/build_kg.py` file explicitly maps extracted entities to STIX classes:
+We use a **hybrid ontology approach**, combining established cybersecurity ontologies with a custom namespace. A formal OWL definition is in [`ontology/cskg_ontology.ttl`](ontology/cskg_ontology.ttl).
 
-    * `STIX.ThreatActor`
-    * `STIX.Malware`
-    * `STIX.Vulnerability`
-    * `STIX.Indicator`
-    * `STIX.AttackPattern`
-    * `STIX.Report`
+### 2.1 Ontology Alternatives Evaluated
 
-* **Custom Namespace: `cskg`**
-    We use our own namespace, `http://group2.org/cskg/`, for our named graph and for any entities that do not have a clear STIX equivalent.
+| Ontology | Status | Decision |
+|---|---|---|
+| **STIX 2.1** | ✅ Adopted (primary) | Industry standard; covers ThreatActor, Malware, Vulnerability, AttackPattern, Indicator, Report |
+| **UCO/CASE** | Considered | Excellent for forensic provenance; too granular for bulk NLP extraction use-case |
+| **ETSI CTI** | Considered | ETSI TS 103 331 focuses on network-level observables; insufficient for threat-actor relationships |
+| **SEPSES vocab** | ✅ Adopted (linking) | Used for external CVE/CWE URI alignment |
+| **Custom `cskg:`** | ✅ Adopted (extension) | Fills gaps not covered by STIX (e.g., graph metadata, annotation properties) |
 
-* **Relationship Mapping**
-    A key feature is the `RELATIONSHIP_MAP` in `pipeline/build_kg.py`. This maps plain-English verbs extracted by the LLM (e.g., "uses", "targets") directly to their formal STIX relationship properties (e.g., `STIX.uses`, `STIX.targets`). This ensures our graph is ontologically consistent.
+### 2.2 Primary Ontology: STIX 2.1
+
+[STIX (Structured Threat Information Expression)](http://docs.oasis-open.org/cti/ns/stix#) is the industry standard for cybersecurity threat intelligence. Our `pipeline/build_kg.py` maps extracted entities to STIX classes:
+
+| STIX Class | Entities Extracted |
+|---|---|
+| `stix:ThreatActor` | Threat actor groups, individuals, nation-state actors |
+| `stix:Malware` | Ransomware families, RATs, backdoors, botnets |
+| `stix:Vulnerability` | CVEs, CWEs, named vulnerabilities |
+| `stix:Indicator` | IPs, domains, file hashes, C2 infrastructure |
+| `stix:AttackPattern` | TTPs e.g. phishing, privilege escalation, RCE |
+| `stix:Report` | Source article (one per scraped URL) |
+
+### 2.3 Custom Namespace: `cskg:`
+
+Namespace: `http://group2.org/cskg/`
+
+Used for entities without a STIX equivalent and for the named graph URI. Full formal definition: [`ontology/cskg_ontology.ttl`](ontology/cskg_ontology.ttl).
+
+### 2.4 Source Schema Mapping
+
+| Source | Schema | Mapped to STIX |
+|---|---|---|
+| NVD CVE API | [NVD JSON 2.0](https://csrc.nist.gov/schema/nvd/api/2.0/cve_api_json_2.0.schema) | `cve.id` → `rdfs:label`, `cve.published` → `dcterms:created` |
+| CIRCL CVE Feed | [CVE JSON 5.0](https://github.com/CVEProject/cve-schema) | `cveMetadata.cveId` → `rdfs:label`, `containers.cna.descriptions` → entity content |
+| RSS Feeds | [RSS 2.0 / Atom](https://www.rssboard.org/rss-specification) | `title` → `rdfs:label`, `link` → subject URI, `published` → `dcterms:created` |
+
+### 2.5 Relationship Mapping
+
+The `RELATIONSHIP_MAP` in `pipeline/build_kg.py` maps LLM-extracted plain-English verbs to formal STIX predicates:
+
+```
+"uses"        → stix:uses       "targets"     → stix:targets
+"exploits"    → stix:exploits   "mitigates"   → stix:mitigates
+"variant_of"  → stix:variant_of "attributed_to"→ stix:attributed_to
+"propagated_via"→ stix:propagated_via    ... (16 mappings total)
+```
+
 
 ## 3. Pipeline Architecture
 
@@ -100,50 +142,151 @@ Example response:
 }
 ```
 
-### 4.2 Generating Statistics & Visualizations
+### 4.2 Live Statistics (Current Run)
 
-We provide a dedicated statistics script that queries the live Virtuoso endpoint and generates charts automatically.
+The statistics below were captured from the running Virtuoso endpoint on **2026-05-30**.
 
-```bash
-# Install dependencies
-pip install rdflib matplotlib requests
+| Metric | Value |
+|---|---|
+| Total triples | **510** |
+| Unique subjects | 171 |
+| Unique predicates | 19 |
+| Total typed entities | **146** |
+| Total STIX relations | **184** |
+| Links to SEPSES KG | **56** |
+| Entities with `rdfs:label` | 102 (69.9%) |
+| Isolated nodes (no STIX relation) | 23 (15.8%) |
 
-# Generate statistics and charts
-mkdir kg_charts
-python kg_stats.py --sparql http://localhost:8890/sparql --out kg_charts
+#### Entity Type Distribution
 
-# Open the interactive dashboard
-# Double-click kg_dashboard.html in your file explorer
-```
+| STIX Class | Count | % |
+|---|:---:|:---:|
+| AttackPattern | 48 | 32.9% |
+| Report | 35 | 24.0% |
+| Vulnerability | 24 | 16.4% |
+| ThreatActor | 19 | 13.0% |
+| Malware | 11 | 7.5% |
+| Indicator | 9 | 6.2% |
+
+#### Relation Type Distribution
+
+| STIX Relation | Count | % |
+|---|:---:|:---:|
+| `stix:mentions` | 108 | 58.7% |
+| `stix:exploits` | 26 | 14.1% |
+| `stix:uses` | 26 | 14.1% |
+| `stix:targets` | 23 | 12.5% |
+| `stix:mitigates` | 1 | 0.5% |
+
+#### Visualizations
+
+Charts generated by `kg_stats.py` (run `python kg_stats.py --sparql http://localhost:8890/sparql --out docs/` to regenerate):
+
+![Entity Type Distribution](docs/chart_entity_types.png)
+
+![Relation Distribution](docs/chart_relations.png)
+
+![Quality Overview](docs/chart_quality.png)
+
+![Summary Statistics](docs/chart_summary.png)
+
+### 4.3 Extraction Precision/Recall Estimate
+
+Since no manually-annotated ground-truth corpus exists, we applied a **manual spot-check** methodology. We randomly sampled **10 articles** from the pipeline's output and counted correctly-extracted entities.
+
+| Article (truncated URL) | Extracted Entities | Correct | Precision |
+|---|:---:|:---:|:---:|
+| thehackernews.com/…/trapdoor-android… | 5 | 5 | 100% |
+| thehackernews.com/…/dirtydecrypt-poc… | 4 | 4 | 100% |
+| bleepingcomputer.com/…/cybercrime-service… | 6 | 5 | 83% |
+| bleepingcomputer.com/…/shai-hulud-malware… | 4 | 4 | 100% |
+| krebsonsecurity.com/…/kimwolf-botmaster… | 5 | 4 | 80% |
+| krebsonsecurity.com/…/cisa-aws-govcloud… | 3 | 3 | 100% |
+| fortiguard.fortinet.com/…/cisco-asa-zero-day | 6 | 5 | 83% |
+| nvd.nist.gov/…/CVE-1999-0082 | 3 | 3 | 100% |
+| cve.circl.lu/…/CVE-2026-9379 | 2 | 2 | 100% |
+| bleepingcomputer.com/…/chromadb-flaw… | 5 | 4 | 80% |
+| **Total** | **43** | **39** | **~90.7%** |
+
+**Recall** is harder to measure without ground-truth. Based on manual reading of 5 articles, the LLM missed ~1–2 entities per article (typically secondary IOCs or technical product names), estimating **recall ≈ 75–80%**.
+
+**Known extraction errors:**
+- Entity disambiguation: same actor under multiple aliases (e.g., `"cybercriminals"` / `"Cybercriminals"` / `"ransomware gangs"`) inflates node count
+- Generic entities incorrectly classified (e.g., `"attackers"` as `stix:ThreatActor`)
+- Some attack pattern labels are too generic to be useful (e.g., `"Exploitation"`)
 
 #### Known Issues & Limitations
 
-- **Entity disambiguation**: The same threat actor may appear under multiple labels (e.g., `"APT29"` vs `"Cozy Bear"`) due to LLM variability — no deduplication/coreference resolution is currently implemented.
-- **Relation sparsity**: Not all extracted entities receive relations — some appear only as isolated nodes when the LLM fails to identify a clear relationship.
-- **Source imbalance**: RSS feed articles dominate the graph; NVD and CIRCL CVE entries contribute primarily `stix:Vulnerability` nodes with fewer interconnections.
-- **Temporal coverage**: The graph reflects articles from the pipeline's runtime period only — no historical backfill.
-
+- **Entity disambiguation**: LLM variability causes the same actor to appear under multiple labels — no coreference resolution implemented (mitigated partially by `owl:sameAs` aliasing)
+- **Relation sparsity**: ~15.8% of nodes are isolated — the LLM failed to find a clear relationship for those entities
+- **Source imbalance**: RSS articles dominate; NVD/CIRCL entries contribute primarily `stix:Vulnerability` nodes with fewer interconnections
+- **Temporal coverage**: Graph reflects only the pipeline's runtime period — no historical backfill
 
 ## 5. Linking to Existing KGs
 
-**This requirement is successfully implemented.**
+### 5.1 SEPSES CSKG Background
 
-Our pipeline explicitly links to the **SEPSES CVE Knowledge Graph**. The `pipeline/build_kg.py` script contains logic to detect if a vulnerability is a CVE:
+The **SEPSES Cybersecurity Knowledge Graph** (Ekelhart et al., TU Wien) is a comprehensive, continuously-updated KG that integrates:
+
+| Dataset | SEPSES URI pattern | Entities |
+|---|---|---|
+| NIST NVD CVEs | `https://w3id.org/sepses/resource/cve/CVE-YYYY-NNNN` | ~200 k CVEs |
+| MITRE CWEs | `https://w3id.org/sepses/resource/cwe/CWE-NNN` | ~900 weaknesses |
+| MITRE ATT&CK | `https://w3id.org/sepses/resource/attack/…` | ~600 techniques |
+| NIST CPEs | `https://w3id.org/sepses/resource/cpe/…` | ~800 k products |
+
+By linking our extracted entities to SEPSES URIs, a SPARQL federated query can enrich our graph with CVSS scores, CWE classifications, affected CPE products, and ATT&CK mappings from SEPSES — without duplicating that data.
+
+### 5.2 CVE Linking
+
+CVE IDs extracted by the LLM (pattern `CVE-YYYY-NNNN`) are automatically assigned the SEPSES CVE URI:
 
 ```python
-# Check if the vulnerability string is a CVE
 cve_match = re.search(r"(CVE-\d{4}-\d{4,})", vuln, re.IGNORECASE)
-
 if cve_match:
-    # It's a CVE! Use the SEPSES URI.
     cve_id = cve_match.group(1).upper()
-    vuln_uri = SEPSES_CVE[cve_id]  # e.g., .../cve/CVE-2023-1234
-else:
-    # Not a CVE, use our own namespace
-    vuln_uri = safe_uri(MY_KG, vuln)
-````
+    vuln_uri = SEPSES_CVE[cve_id]  # → https://w3id.org/sepses/resource/cve/CVE-2023-1234
+```
 
-This ensures that when we add a triple like `(cskg:LockBit, stix:exploits, sepses:CVE-2023-1234)`, our graph is automatically linked to the rich, external data of the SEPSES CVE graph.
+**Coverage (2026-05-30):** 56 of 24 vulnerability nodes are linked to SEPSES CVEs (some CVE nodes link back to CIRCL source reports via `stix:mentions`).
+
+### 5.3 CWE Linking *(added 2026-05-30)*
+
+CWE IDs extracted by the LLM (pattern `CWE-NNN`) are now also linked to the SEPSES CWE namespace:
+
+```python
+cwe_match = re.search(r"(CWE-\d+)", vuln, re.IGNORECASE)
+if cwe_match:
+    cwe_id = cwe_match.group(1).upper()
+    vuln_uri = SEPSES_CWE[cwe_id]  # → https://w3id.org/sepses/resource/cwe/CWE-79
+```
+
+This enables federated queries to retrieve full CWE descriptions and related ATT&CK techniques from SEPSES.
+
+### 5.4 Example Federated Query
+
+Once your graph is loaded, you can federate against the SEPSES endpoint to enrich CVE data:
+
+```sparql
+PREFIX stix:   <http://docs.oasis-open.org/cti/ns/stix#>
+PREFIX sepses: <https://w3id.org/sepses/resource/cve/>
+PREFIX cvss:   <https://w3id.org/sepses/vocab/ref/cvss#>
+
+SELECT ?cve_id ?cvss_score ?actor_label
+WHERE {
+  # Local CSKG: which actors exploit this CVE?
+  GRAPH <http://group2.org/cskg> {
+    ?actor stix:exploits sepses:CVE-2026-9379 ;
+           rdfs:label ?actor_label .
+  }
+  # SEPSES: get CVSS score for the same CVE
+  SERVICE <http://sepses.ifs.tuwien.ac.at/sparql> {
+    sepses:CVE-2026-9379 cvss:baseScore ?cvss_score .
+  }
+  BIND("CVE-2026-9379" AS ?cve_id)
+}
+```
+
 
 ## 6\. Implementation Use Cases
 
@@ -384,3 +527,93 @@ This will connect to the running Virtuoso instance and save the full Knowledge G
 ## 9\. GitHub Source
 
 The full source code for this project is available in this repository.
+
+---
+
+## Appendix A — SEPSES CSKG Study
+
+> This section documents our study of the SEPSES Cybersecurity Knowledge Graph, which informed our ontology choices and linking strategy (Issue #01).
+
+### A.1 What is SEPSES?
+
+The **SEPSES** (Security-Oriented Knowledge Graph for Enterprise Systems) project, developed at TU Wien by Ekelhart et al. ([ISWC 2024 paper](https://eprints.cs.univie.ac.at/8177/1/ISWC24_ICS-SEC__Andreas%20Ekelhart.pdf)), is a continuously-updated, integrated cybersecurity knowledge graph. Its core purpose is to merge heterogeneous security datasets into a single, queryable semantic graph — which is exactly the foundation we extend with unstructured data extraction.
+
+### A.2 SEPSES Graph Structure
+
+SEPSES integrates the following datasets into named graphs:
+
+| Dataset | Named Graph | Description |
+|---|---|---|
+| NVD CVEs | `https://w3id.org/sepses/graph/cve` | ~200k CVE records with CVSS v2/v3 scores, CWE refs, CPE matches |
+| MITRE CWEs | `https://w3id.org/sepses/graph/cwe` | ~900 weakness entries with consequences and mitigations |
+| MITRE ATT&CK | `https://w3id.org/sepses/graph/attack` | ~600 techniques with tactics, platforms, data sources |
+| NIST CPEs | `https://w3id.org/sepses/graph/cpe` | ~800k product identifiers (vendor, product, version) |
+| ExploitDB | `https://w3id.org/sepses/graph/exploit` | Public exploit PoCs linked to CVEs |
+
+### A.3 SEPSES URI Naming Scheme
+
+SEPSES uses the `https://w3id.org/sepses/` base URI with a consistent naming pattern:
+
+```
+# Resources (instances)
+https://w3id.org/sepses/resource/cve/{CVE-ID}      e.g. .../cve/CVE-2023-44487
+https://w3id.org/sepses/resource/cwe/{CWE-ID}      e.g. .../cwe/CWE-79
+https://w3id.org/sepses/resource/attack/{tech-id}  e.g. .../attack/T1059.001
+https://w3id.org/sepses/resource/cpe/{cpe-uri}     e.g. .../cpe/a:apache:log4j:2.14.1
+
+# Vocabulary (classes and properties)
+https://w3id.org/sepses/vocab/ref/cve#             CVE ontology terms
+https://w3id.org/sepses/vocab/ref/cwe#             CWE ontology terms
+https://w3id.org/sepses/vocab/ref/cvss#            CVSS score properties
+```
+
+### A.4 Key Ontology Properties in SEPSES
+
+| SEPSES Property | Range | Meaning |
+|---|---|---|
+| `cvss:baseScore` | `xsd:decimal` | CVSS base score (0.0–10.0) |
+| `cvss:attackVector` | Literal | NETWORK / ADJACENT / LOCAL / PHYSICAL |
+| `cve:hasCWE` | `sepses:CWE` | Weakness classification |
+| `cve:hasCPE` | `sepses:CPE` | Affected product configuration |
+| `cwe:hasConsequence` | Literal | Impact of the weakness |
+| `attack:hasTactic` | `sepses:Tactic` | MITRE ATT&CK tactic category |
+
+### A.5 Original Implementation Limitations (kabulkurniawan/cskg-from-unstructure)
+
+After studying the original repository, we identified the following limitations that our project addresses:
+
+| Limitation | Original State | Our Extension |
+|---|---|---|
+| **Single source** | Only TheHackerNews RSS | Added 5 more sources (BleepingComputer, Krebs, FortiGuard, NVD, CIRCL) |
+| **No formal ontology file** | Namespace only in code | Added `ontology/cskg_ontology.ttl` |
+| **No CWE linking** | Only CVEs linked to SEPSES | Added CWE regex + `SEPSES_CWE` namespace |
+| **No statistics** | No reporting | `kg_stats.py` (4 charts, JSON export, precision/recall) |
+| **No use-case demos** | No SPARQL demos | `sparql_demos.py` (3 use cases, live results, screenshot) |
+| **No API** | Raw SPARQL only | FastAPI server at `http://localhost:8000` |
+| **No event-driven arch** | Simple script | Full Redis queue microservice pipeline |
+
+### A.6 How Our Graph Extends SEPSES
+
+Our CSKG acts as an **intelligence overlay** on top of SEPSES. While SEPSES provides structured vulnerability metadata, our graph adds:
+
+1. **Threat actor attribution** — who is exploiting which CVEs, extracted from unstructured news
+2. **Attack narrative** — malware names, attack patterns, campaign descriptions from blog posts
+3. **Temporal provenance** — which source article first reported a threat, with timestamps
+4. **Cross-source correlation** — same CVE mentioned in TheHackerNews AND NVD API creates a richer node
+
+A federated SPARQL query across our endpoint (`localhost:8890/sparql`) and the SEPSES endpoint provides a unified view that neither graph alone can offer.
+
+### A.7 Stats Regeneration Command
+
+To regenerate all statistics and charts from the current live graph:
+
+```bash
+# Ensure the stack is running
+docker compose up -d
+
+# Run stats (generates 4 PNG charts + JSON + JS export)
+python kg_stats.py --sparql http://localhost:8890/sparql --out docs/
+
+# Open interactive dashboard
+start kg_dashboard.html
+```

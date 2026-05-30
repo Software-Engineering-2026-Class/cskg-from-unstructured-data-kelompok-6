@@ -7,6 +7,7 @@ from urllib.parse import quote
 MY_KG = Namespace("http://group2.org/cskg/")
 STIX = Namespace("http://docs.oasis-open.org/cti/ns/stix#")
 SEPSES_CVE = Namespace("https://w3id.org/sepses/resource/cve/")
+SEPSES_CWE = Namespace("https://w3id.org/sepses/resource/cwe/")
 
 RELATIONSHIP_MAP = {
     "uses": STIX.uses,
@@ -100,10 +101,17 @@ def build_graph(extractions, existing_graph=None):
             g.add((report_uri, STIX.mentions, malware_uri))
 
         for vuln in entities.get("vulnerabilities") or []:
+            # --- CVE detection: link to SEPSES CVE KG ---
             cve_match = re.search(r"(CVE-\d{4}-\d{4,})", vuln, re.IGNORECASE)
+            # --- CWE detection: link to SEPSES CWE KG ---
+            cwe_match = re.search(r"(CWE-\d+)", vuln, re.IGNORECASE)
+
             if cve_match:
                 cve_id = cve_match.group(1).upper()
-                vuln_uri = SEPSES_CVE[cve_id]
+                vuln_uri = SEPSES_CVE[cve_id]  # e.g., sepses:CVE-2023-1234
+            elif cwe_match:
+                cwe_id = cwe_match.group(1).upper()
+                vuln_uri = SEPSES_CWE[cwe_id]  # e.g., sepses:CWE-79
             else:
                 vuln_uri = safe_uri(MY_KG, vuln)
 
