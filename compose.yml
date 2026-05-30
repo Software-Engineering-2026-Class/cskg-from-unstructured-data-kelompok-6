@@ -17,10 +17,13 @@ services:
     environment:
       - VIRT_SPARQL_ENDPOINT=/sparql
       - DBA_PASSWORD=mysecretpassword
+      - VIRT_Parameters_DirsAllowed=/
+      - VIRT_Parameters_FileExtensionsAllowed=ttl,rdf,nt,owl
     volumes:
       # This is the persistent storage for the graph data
       - virtuoso_db:/database
       - ./pipeline/virtuoso-scripts:/initdb.d
+      - .:/data
     restart: always
     healthcheck:
       test: ["CMD", "isql", "1111", "dba", "mysecretpassword", "exec=status()"]

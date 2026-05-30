@@ -1,0 +1,82 @@
+[
+  {
+    "use_case": "Use Case 1: Threat Actor Profiling",
+    "description": "Use Case 1: Threat Actor Profiling\n-----------------------------------\nQuestion: \"What malware, attack patterns, and targeted indicators are\nassociated with a given threat actor?\"\n\nScenario: A SOC analyst receives an alert mentioning a known threat group.\nThey need a full capability profile to understand the scope of the threat\nand prioritise detection rules.\n\nThis query retrieves all malware, attack patterns, and indicators linked\nto *every* ThreatActor in the graph, ordered by actor then asset type.\nAnalysts can filter by actor label in the WHERE clause.\n",
+    "results": [
+      {
+        "actor_label": "cybercriminals",
+        "asset_type": "AttackPattern",
+        "asset_label": "Fraudulent code-signing"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "asset_type": "AttackPattern",
+        "asset_label": "fraudulent code-signing"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "asset_type": "Malware",
+        "asset_label": "malware-signing-as-a-service (MSaaS)"
+      }
+    ]
+  },
+  {
+    "use_case": "Use Case 2: CVE-to-IOC Tracing",
+    "description": "Use Case 2: CVE-to-IOC Tracing\n--------------------------------\nQuestion: \"Which threat actors exploit a specific CVE, and what indicators\nof compromise (IOCs) are associated with those actors?\"\n\nScenario: The CISO receives a vendor advisory for a newly-patched CVE.\nBefore patching, they want to know whether any active threat actors in the\ngraph are exploiting it and what IOCs defenders should immediately hunt for.\n\nThe query walks:\n  CVE  <-- stix:exploits --  ThreatActor  -- stix:uses -->  Indicator\nusing the linked SEPSES URI for CVE identity.\n",
+    "results": []
+  },
+  {
+    "use_case": "Use Case 3: Campaign Timeline & Provenance",
+    "description": "Use Case 3: Campaign Timeline & Report Provenance\n--------------------------------------------------\nQuestion: \"When were reports about a threat actor published, and what\nentities (malware, CVEs) did each report mention?\"\n\nScenario: An incident responder is building a timeline for a post-incident\nreview. They need to know which published reports reference the relevant\nthreat actor, what malware and CVEs each report surfaces, and the\nchronological order \u2014 so they can correlate intrusion activity with\npublic disclosure dates.\n\nThe query collects stix:Report nodes, their timestamps, and all entities\nthose reports mention, grouped by actor for narrative coherence.\n",
+    "results": [
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "Malware-signing-as-a-service",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "Fraudulent code-signing",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "Malware-signing-as-a-service",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "code-signing",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "fraudulent code-signing",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "malware-signing-as-a-service",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "malware-signing-as-a-service",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
+      },
+      {
+        "actor_label": "cybercriminals",
+        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
+        "entity_label": "malware-signing-as-a-service (MSaaS)",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
+      }
+    ]
+  }
+]
