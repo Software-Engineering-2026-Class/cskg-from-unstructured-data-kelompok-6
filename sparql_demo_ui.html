@@ -427,7 +427,7 @@
   <!-- Config bar -->
   <div class="config-bar">
     <label>SPARQL Endpoint</label>
-    <input type="text" id="endpoint" value="http://localhost:8890/sparql" spellcheck="false">
+    <input type="text" id="endpoint" value="http://localhost:8000/query" spellcheck="false">
     <button class="run-all-btn" onclick="runAll()">▶ Run All Demos</button>
   </div>
 
@@ -479,6 +479,7 @@
         <pre id="q1"><span class="kw">PREFIX</span> <span class="uri">cskg:</span>   <span class="str">&lt;http://group2.org/cskg/&gt;</span>
 <span class="kw">PREFIX</span> <span class="uri">stix:</span>   <span class="str">&lt;http://docs.oasis-open.org/cti/ns/stix#&gt;</span>
 <span class="kw">PREFIX</span> <span class="uri">rdfs:</span>   <span class="str">&lt;http://www.w3.org/2000/01/rdf-schema#&gt;</span>
+<span class="kw">PREFIX</span> <span class="uri">owl:</span>    <span class="str">&lt;http://www.w3.org/2002/07/owl#&gt;</span>
 
 <span class="kw">SELECT DISTINCT</span>
     <span class="var">?actor_label</span>
@@ -489,15 +490,17 @@
     <span class="var">?actor</span> <span class="fn">a</span> <span class="uri">stix:ThreatActor</span> ;
            <span class="uri">rdfs:label</span> <span class="var">?actor_label</span> .
 
-    { <span class="var">?actor</span> <span class="uri">stix:uses</span> <span class="var">?asset</span> .
+    <span class="var">?actor</span> <span class="uri">owl:sameAs?</span> <span class="var">?actor_canonical</span> .
+
+    { <span class="var">?actor_canonical</span> <span class="uri">stix:uses</span> <span class="var">?asset</span> .
       <span class="var">?asset</span>  <span class="fn">a</span> <span class="uri">stix:Malware</span> ; <span class="uri">rdfs:label</span> <span class="var">?asset_label</span> .
       <span class="kw">BIND</span>(<span class="str">"Malware"</span> <span class="kw">AS</span> <span class="var">?asset_type</span>) }
     <span class="kw">UNION</span>
-    { <span class="var">?actor</span> <span class="uri">stix:uses</span> <span class="var">?asset</span> .
+    { <span class="var">?actor_canonical</span> <span class="uri">stix:uses</span> <span class="var">?asset</span> .
       <span class="var">?asset</span>  <span class="fn">a</span> <span class="uri">stix:AttackPattern</span> ; <span class="uri">rdfs:label</span> <span class="var">?asset_label</span> .
       <span class="kw">BIND</span>(<span class="str">"AttackPattern"</span> <span class="kw">AS</span> <span class="var">?asset_type</span>) }
     <span class="kw">UNION</span>
-    { <span class="var">?actor</span> <span class="uri">stix:targets</span> <span class="var">?asset</span> .
+    { <span class="var">?actor_canonical</span> <span class="uri">stix:targets</span> <span class="var">?asset</span> .
       <span class="var">?asset</span>  <span class="fn">a</span> <span class="uri">stix:Indicator</span> ; <span class="uri">rdfs:label</span> <span class="var">?asset_label</span> .
       <span class="kw">BIND</span>(<span class="str">"Indicator"</span> <span class="kw">AS</span> <span class="var">?asset_type</span>) }
   }
@@ -698,6 +701,7 @@ PREFIX cskg:   <http://group2.org/cskg/>
 PREFIX stix:   <http://docs.oasis-open.org/cti/ns/stix#>
 PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX sepses: <https://w3id.org/sepses/resource/cve/>
+PREFIX owl:    <http://www.w3.org/2002/07/owl#>
 `.trim();
 
 const QUERIES = {
@@ -705,13 +709,14 @@ const QUERIES = {
 WHERE {
   GRAPH <${GRAPH}> {
     ?actor a stix:ThreatActor ; rdfs:label ?actor_label .
-    { ?actor stix:uses ?asset . ?asset a stix:Malware ; rdfs:label ?asset_label .
+    ?actor owl:sameAs? ?actor_canonical .
+    { ?actor_canonical stix:uses ?asset . ?asset a stix:Malware ; rdfs:label ?asset_label .
       BIND("Malware" AS ?asset_type) }
     UNION
-    { ?actor stix:uses ?asset . ?asset a stix:AttackPattern ; rdfs:label ?asset_label .
+    { ?actor_canonical stix:uses ?asset . ?asset a stix:AttackPattern ; rdfs:label ?asset_label .
       BIND("AttackPattern" AS ?asset_type) }
     UNION
-    { ?actor stix:targets ?asset . ?asset a stix:Indicator ; rdfs:label ?asset_label .
+    { ?actor_canonical stix:targets ?asset . ?asset a stix:Indicator ; rdfs:label ?asset_label .
       BIND("Indicator" AS ?asset_type) }
   }
 }
@@ -833,28 +838,27 @@ async function runQuery(num) {
   openTab(ucId, 'results');
 
   document.getElementById(resultsId).innerHTML =
-    '<div class="spinner"><div class="spin"></div> Querying Virtuoso…</div>';
-
-  const url = new URL(endpoint);
-  url.searchParams.set('query', query);
-  url.searchParams.set('format', 'application/sparql-results+json');
+    '<div class="spinner"><div class="spin"></div> Querying Virtuoso via FastAPI…</div>';
 
   try {
-    const resp = await fetch(url.toString(), {
-      headers: { 'Accept': 'application/sparql-results+json' }
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query })
     });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      throw new Error(`HTTP ${resp.status}: ${errBody}`);
+    }
     const data = await resp.json();
-    const bindings = data?.results?.bindings ?? [];
-    const rows = bindings.map(b =>
-      Object.fromEntries(Object.entries(b).map(([k, v]) => [k, v.value]))
-    );
+    // FastAPI /query returns { variables: [...], results: [{...}, ...] }
+    const rows = data?.results ?? [];
     renderResults(resultsId, rows);
   } catch (err) {
     document.getElementById(resultsId).innerHTML =
       `<div class="error-msg">
         <strong>Connection error:</strong> ${err.message}<br><br>
-        Make sure the Virtuoso container is running:
+        Make sure the Docker stack is running:
         <code>docker compose up -d</code>
       </div>`;
   }

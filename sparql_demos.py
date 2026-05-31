@@ -125,22 +125,24 @@ WHERE {{
     ?actor a stix:ThreatActor ;
            rdfs:label ?actor_label .
 
+    ?actor owl:sameAs? ?actor_canonical .
+
     {{
-      ?actor stix:uses ?asset .
+      ?actor_canonical stix:uses ?asset .
       ?asset a stix:Malware ;
              rdfs:label ?asset_label .
       BIND("Malware" AS ?asset_type)
     }}
     UNION
     {{
-      ?actor stix:uses ?asset .
+      ?actor_canonical stix:uses ?asset .
       ?asset a stix:AttackPattern ;
              rdfs:label ?asset_label .
       BIND("AttackPattern" AS ?asset_type)
     }}
     UNION
     {{
-      ?actor stix:targets ?asset .
+      ?actor_canonical stix:targets ?asset .
       ?asset a stix:Indicator ;
              rdfs:label ?asset_label .
       BIND("Indicator" AS ?asset_type)
@@ -150,6 +152,7 @@ WHERE {{
 ORDER BY ?actor_label ?asset_type ?asset_label
 LIMIT 50
 """
+
 
 
 # ===========================================================================

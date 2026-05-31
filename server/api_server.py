@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Body
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import (
     BaseModel,
     Field,
@@ -14,6 +15,17 @@ SPARQL_ENDPOINT = "http://virtuoso:8890/sparql"
 app = FastAPI(
     title="Cybersecurity Knowledge Graph API",
     description="Query a LIVE CSKG running on Virtuoso.",
+)
+
+# --- CORS Middleware ---
+# Allows requests from local HTML files (file:// origin = "null")
+# and localhost dev servers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
