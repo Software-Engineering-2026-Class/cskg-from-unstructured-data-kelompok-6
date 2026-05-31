@@ -12,20 +12,33 @@ We are Group 6 which includes these amazing guys:
 | Azhar Maulana | 24/533487/PA/22582 | naa2412 |
 | Evan Razzan Adytaputra | 24/545257/PA/23166| evanrazzanadytaputra2006-dotcom | 
 
-## 1. Unstructured Sources
+## 1. Data Sources
+We used 6 sources in total: 1 from the original implementation and 5 added by this group.
 
-We use **6 sources** in total: 1 from the original implementation and 5 added by this group. Each was selected for its complementary coverage of the cybersecurity threat landscape.
-<div style="overflow-x:auto">
+### 1. TheHackerNews (RSS)
+- Access: `http://feeds.feedburner.com/TheHackersNews`
+- Purpose: Broad cybersecurity news covering APTs, malware, and CVEs.
 
-| # | Source | Type | Access Method | Rationale |
-|---|---|---|---|---|
-| 1 | **TheHackerNews** | RSS Feed | `http://feeds.feedburner.com/TheHackersNews` | Original source; high-volume, broad cybersecurity news covering APTs, malware, and CVEs |
-| 2 | **BleepingComputer** | RSS Feed | `https://www.bleepingcomputer.com/feed/` | Incident-level reporting with rich IOC details (C2 domains, hashes, file names); complements high-level news |
-| 3 | **KrebsOnSecurity** | RSS Feed | `https://krebsonsecurity.com/feed/` | Investigative journalism on cybercrime and threat actors; provides named actor attribution and campaign context |
-| 4 | **FortiGuard Labs** | RSS Feed | `https://filestore.fortinet.com/fortiguard/rss/outbreakalert.xml` | Vendor threat intelligence; provides structured outbreak alerts with technical indicators and severity |
-| 5 | **NVD CVE API** | REST API | `GET https://services.nvd.nist.gov/rest/json/cves/2.0` | NIST's authoritative CVE repository; no API key required; rate limit ~5 req/30s; schema: [NVD JSON 2.0](https://csrc.nist.gov/schema/nvd/api/2.0/cve_api_json_2.0.schema) |
-| 6 | **CIRCL CVE Feed** | REST API | `GET https://cve.circl.lu/api/last/N` | Real-time CVE data from Computer Incident Response Center Luxembourg (CIRCL); no authentication needed; schema: [CVE JSON 5.0](https://github.com/CVEProject/cve-schema) |
-</div>
+### 2. BleepingComputer (RSS)
+- Access: `https://www.bleepingcomputer.com/feed/`
+- Purpose: Incident-level reporting with rich IOC details such as domains, hashes, and file names.
+
+### 3. KrebsOnSecurity (RSS)
+- Access: `https://krebsonsecurity.com/feed/`
+- Purpose: Investigative journalism focused on cybercrime and threat actors.
+
+### 4. FortiGuard Labs (RSS)
+- Access: `https://filestore.fortinet.com/fortiguard/rss/outbreakalert.xml`
+- Purpose: Structured outbreak alerts with technical indicators and severity information.
+
+### 5. NVD CVE API (REST)
+- Access: `GET https://services.nvd.nist.gov/rest/json/cves/2.0`
+- Purpose: NIST's authoritative CVE repository.
+
+### 6. CIRCL CVE Feed (REST)
+- Access: `GET https://cve.circl.lu/api/last/N`
+- Purpose: Real-time CVE information from CIRCL.
+
 
 All sources are polled every 5 minutes by the `producer` service (`pipeline/scraper.py`). Duplicate articles are filtered using a Redis `seen_urls` set keyed on the source URL.
 
