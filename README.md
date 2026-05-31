@@ -15,6 +15,7 @@ We are Group 6 which includes these amazing guys:
 ## 1. Unstructured Sources
 
 We use **6 sources** in total: 1 from the original implementation and 5 added by this group. Each was selected for its complementary coverage of the cybersecurity threat landscape.
+<div style="overflow-x:auto">
 
 | # | Source | Type | Access Method | Rationale |
 |---|---|---|---|---|
@@ -24,6 +25,7 @@ We use **6 sources** in total: 1 from the original implementation and 5 added by
 | 4 | **FortiGuard Labs** | RSS Feed | `https://filestore.fortinet.com/fortiguard/rss/outbreakalert.xml` | Vendor threat intelligence; provides structured outbreak alerts with technical indicators and severity |
 | 5 | **NVD CVE API** | REST API | `GET https://services.nvd.nist.gov/rest/json/cves/2.0` | NIST's authoritative CVE repository; no API key required; rate limit ~5 req/30s; schema: [NVD JSON 2.0](https://csrc.nist.gov/schema/nvd/api/2.0/cve_api_json_2.0.schema) |
 | 6 | **CIRCL CVE Feed** | REST API | `GET https://cve.circl.lu/api/last/N` | Real-time CVE data from Computer Incident Response Center Luxembourg (CIRCL); no authentication needed; schema: [CVE JSON 5.0](https://github.com/CVEProject/cve-schema) |
+</div>
 
 All sources are polled every 5 minutes by the `producer` service (`pipeline/scraper.py`). Duplicate articles are filtered using a Redis `seen_urls` set keyed on the source URL.
 
