@@ -632,3 +632,105 @@ python kg_stats.py --sparql http://localhost:8890/sparql --out docs/
 # Open interactive dashboard
 start kg_dashboard.html
 ```
+## 10\. Member Contributions
+
+## 11\. How to add sources or contribute
+### Reporting Issues
+
+If you find a bug or have a feature request, open a GitHub Issue with:
+- A clear title describing the problem
+- Steps to reproduce (for bugs)
+- Expected vs actual behaviour
+
+### Submitting Changes
+
+1. **Fork** the repository and create a new branch from `main`:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make your changes** following the code style of the existing files (PEP 8 for Python).
+
+3. **Test your changes** — make sure the pipeline still runs end-to-end:
+   ```bash
+   docker compose up -d
+   python scraper.py && python extractor.py && python rdf_builder.py && python loader.py
+   python kg_stats.py   # confirm the graph loaded correctly
+   ```
+
+4. **Commit** with a meaningful message:
+   ```bash
+   git commit -m "feat: add new CTI source parser for XYZ feed"
+   ```
+
+5. **Open a Pull Request** against `main`. Describe what you changed and why.
+
+---
+
+### Adding a New CTI Data Source
+
+The most common contribution is adding a new threat intelligence report or feed. Follow these steps:
+
+#### 1. Add the source file
+
+Place the report in `data/sources/`:
+
+```
+data/sources/new_report.pdf
+```
+
+Supported formats: `.pdf`, `.html`, `.txt`
+
+#### 2. Register it in `scraper.py`
+
+```python
+SOURCES = [
+    # ... existing sources
+    {
+        "name": "Descriptive Name of Report",
+        "path": "data/sources/new_report.pdf",
+        "type": "pdf",
+        "source_url": "https://link-to-original-report.com"
+    },
+]
+```
+
+#### 3. Add entity mappings if needed
+
+If the new source introduces entity labels not already handled, add them to `ENTITY_MAP` in `extractor.py`:
+
+```python
+ENTITY_MAP = {
+    # existing ...
+    "NEW_LABEL": "stix:MatchingClass",
+}
+```
+
+#### 4. Re-run the pipeline
+
+```bash
+python scraper.py
+python extractor.py
+python rdf_builder.py
+python loader.py
+```
+
+New triples will be merged into the existing graph at `http://group2.org/cskg`.
+
+---
+
+### Adding a New SPARQL Use Case
+
+1. Add your query to `sparql_demos.py` following the pattern of the existing three use cases (define a description string, a query string, and add it to the `USE_CASES` list).
+2. Add the corresponding tab panel to `sparql_demo_ui.html` following the existing HTML structure.
+3. Document it in the `README.md` under Section 8.
+
+---
+
+### Code Style
+
+- Python: follow **PEP 8**. Use descriptive variable names.
+- SPARQL: use the shared `PREFIXES` block at the top of each script. Always scope queries to `GRAPH <http://group2.org/cskg>`.
+- Commit messages: use the format `type: short description` where type is one of `feat`, `fix`, `docs`, `refactor`, `test`.
+
+---
