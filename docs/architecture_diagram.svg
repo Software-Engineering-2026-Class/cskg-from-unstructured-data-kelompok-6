@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 750" font-family="'Segoe UI', 'Inter', Arial, sans-serif">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1628"/>
+      <stop offset="100%" style="stop-color:#0d1b2a"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1b2838"/>
+      <stop offset="100%" style="stop-color:#152030"/>
+    </linearGradient>
+    <linearGradient id="srcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#14223a"/>
+      <stop offset="100%" style="stop-color:#0f1a2e"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7eb8da"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1500" height="750" fill="url(#bgGrad)" rx="12"/>
+
+  <!-- Docker Compose Network border -->
+  <rect x="20" y="20" width="1460" height="710" rx="10" fill="none" stroke="#2a3a5c" stroke-width="1.5" stroke-dasharray="8,4"/>
+  <text x="750" y="55" text-anchor="middle" fill="#8ab4d4" font-size="20" font-weight="600">Docker Compose Network</text>
+
+  <!-- ===================== DATA SOURCES ===================== -->
+  <rect x="45" y="90" width="195" height="490" rx="8" fill="url(#srcGrad)" stroke="#2a3a5c" stroke-width="1"/>
+  <text x="142" y="120" text-anchor="middle" fill="#8ab4d4" font-size="14" font-weight="600">6 Data Sources</text>
+
+  <!-- TheHackerNews -->
+  <rect x="62" y="145" width="26" height="26" rx="5" fill="#f97316"/>
+  <text x="75" y="164" text-anchor="middle" fill="white" font-size="15" font-weight="bold">R</text>
+  <text x="98" y="158" fill="#d4e5f7" font-size="12">TheHackerNews</text>
+  <text x="98" y="174" fill="#6a8caa" font-size="10">(RSS)</text>
+
+  <!-- BleepingComputer -->
+  <rect x="62" y="200" width="26" height="26" rx="5" fill="#f97316"/>
+  <text x="75" y="219" text-anchor="middle" fill="white" font-size="15" font-weight="bold">R</text>
+  <text x="98" y="213" fill="#d4e5f7" font-size="12">BleepingComputer</text>
+  <text x="98" y="229" fill="#6a8caa" font-size="10">(RSS)</text>
+
+  <!-- KrebsOnSecurity -->
+  <rect x="62" y="255" width="26" height="26" rx="5" fill="#f97316"/>
+  <text x="75" y="274" text-anchor="middle" fill="white" font-size="15" font-weight="bold">R</text>
+  <text x="98" y="268" fill="#d4e5f7" font-size="12">KrebsOnSecurity</text>
+  <text x="98" y="284" fill="#6a8caa" font-size="10">(RSS)</text>
+
+  <!-- FortiGuard Labs -->
+  <rect x="62" y="315" width="26" height="26" rx="5" fill="#e74c3c"/>
+  <text x="75" y="334" text-anchor="middle" fill="white" font-size="14" font-weight="bold">F</text>
+  <text x="98" y="328" fill="#d4e5f7" font-size="12">FortiGuard Labs</text>
+  <text x="98" y="344" fill="#6a8caa" font-size="10">(RSS)</text>
+
+  <!-- NVD CVE API -->
+  <rect x="62" y="375" width="26" height="26" rx="5" fill="#f39c12"/>
+  <text x="75" y="393" text-anchor="middle" fill="white" font-size="13" font-weight="bold">N</text>
+  <text x="98" y="388" fill="#d4e5f7" font-size="12">NVD CVE API</text>
+  <text x="98" y="404" fill="#6a8caa" font-size="10">(REST)</text>
+
+  <!-- CIRCL CVE Feed -->
+  <rect x="62" y="435" width="26" height="26" rx="5" fill="#3498db"/>
+  <text x="75" y="453" text-anchor="middle" fill="white" font-size="13" font-weight="bold">C</text>
+  <text x="98" y="448" fill="#d4e5f7" font-size="12">CIRCL CVE Feed</text>
+  <text x="98" y="464" fill="#6a8caa" font-size="10">(REST)</text>
+
+  <!-- ===================== PRODUCER ===================== -->
+  <rect x="310" y="300" width="155" height="75" rx="8" fill="url(#boxGrad)" stroke="#3a5a7c" stroke-width="1.2" filter="url(#glow)"/>
+  <text x="387" y="333" text-anchor="middle" fill="#e0f0ff" font-size="14" font-weight="600">Producer</text>
+  <text x="387" y="355" text-anchor="middle" fill="#6a8caa" font-size="12">(scraper.py)</text>
+
+  <!-- Arrow: Sources → Producer -->
+  <line x1="240" y1="338" x2="308" y2="338" stroke="#7eb8da" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===================== REDIS ===================== -->
+  <ellipse cx="580" cy="315" rx="50" ry="16" fill="#1e3048" stroke="#3a5a7c" stroke-width="1.2"/>
+  <rect x="530" y="315" width="100" height="55" fill="#1e3048" stroke="none"/>
+  <line x1="530" y1="315" x2="530" y2="370" stroke="#3a5a7c" stroke-width="1.2"/>
+  <line x1="630" y1="315" x2="630" y2="370" stroke="#3a5a7c" stroke-width="1.2"/>
+  <ellipse cx="580" cy="370" rx="50" ry="16" fill="#1e3048" stroke="#3a5a7c" stroke-width="1.2"/>
+  <text x="580" y="350" text-anchor="middle" fill="#e0f0ff" font-size="15" font-weight="600">Redis</text>
+
+  <!-- Arrow: Producer → Redis -->
+  <line x1="465" y1="338" x2="528" y2="338" stroke="#7eb8da" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="496" y="328" text-anchor="middle" fill="#f9a825" font-size="10" font-style="italic">articles_queue</text>
+
+  <!-- ===================== EXTRACTOR ===================== -->
+  <rect x="700" y="130" width="180" height="75" rx="8" fill="url(#boxGrad)" stroke="#3a5a7c" stroke-width="1.2" filter="url(#glow)"/>
+  <text x="790" y="163" text-anchor="middle" fill="#e0f0ff" font-size="14" font-weight="600">Extractor</text>
+  <text x="790" y="185" text-anchor="middle" fill="#6a8caa" font-size="11">(LangChain + Gemini LLM)</text>
+
+  <!-- Arrow: Redis → Extractor (going up then right) -->
+  <polyline points="580,315 580,168 698,168" fill="none" stroke="#7eb8da" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="620" y="158" fill="#f9a825" font-size="10" font-style="italic">articles_queue</text>
+
+  <!-- Arrow: Extractor → Redis (going down then left) -->
+  <polyline points="880,168 920,168 920,340 632,340" fill="none" stroke="#7eb8da" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="920" y="260" fill="#f9a825" font-size="10" font-style="italic" text-anchor="end">extractions_queue</text>
+
+  <!-- ===================== GRAPH BUILDER ===================== -->
+  <rect x="700" y="480" width="180" height="75" rx="8" fill="url(#boxGrad)" stroke="#3a5a7c" stroke-width="1.2" filter="url(#glow)"/>
+  <text x="790" y="513" text-anchor="middle" fill="#e0f0ff" font-size="14" font-weight="600">Graph Builder</text>
+  <text x="790" y="535" text-anchor="middle" fill="#6a8caa" font-size="11">(builder_worker.py + RDFLib)</text>
+
+  <!-- Arrow: Redis → Graph Builder (going down then right) -->
+  <polyline points="580,386 580,518 698,518" fill="none" stroke="#7eb8da" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="620" y="510" fill="#f9a825" font-size="10" font-style="italic">extractions_queue</text>
+
+  <!-- ===================== VIRTUOSO ===================== -->
+  <ellipse cx="1080" cy="470" rx="58" ry="18" fill="#1e3048" stroke="#3a5a7c" stroke-width="1.2"/>
+  <rect x="1022" y="470" width="116" height="65" fill="#1e3048" stroke="none"/>
+  <line x1="1022" y1="470" x2="1022" y2="535" stroke="#3a5a7c" stroke-width="1.2"/>
+  <line x1="1138" y1="470" x2="1138" y2="535" stroke="#3a5a7c" stroke-width="1.2"/>
+  <ellipse cx="1080" cy="535" rx="58" ry="18" fill="#1e3048" stroke="#3a5a7c" stroke-width="1.2"/>
+  <text x="1080" y="498" text-anchor="middle" fill="#e0f0ff" font-size="13" font-weight="600">Virtuoso</text>
+  <text x="1080" y="516" text-anchor="middle" fill="#6a8caa" font-size="11">SPARQL Endpoint</text>
+  <text x="1080" y="533" text-anchor="middle" fill="#6a8caa" font-size="11">(:8890)</text>
+
+  <!-- Arrow: Graph Builder → Virtuoso -->
+  <line x1="880" y1="518" x2="1020" y2="505" stroke="#7eb8da" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="950" y="498" text-anchor="middle" fill="#c0d8e8" font-size="10" font-style="italic">SPARQL INSERT DATA</text>
+
+  <!-- ===================== FASTAPI SERVER ===================== -->
+  <rect x="1260" y="300" width="170" height="70" rx="8" fill="url(#boxGrad)" stroke="#3a5a7c" stroke-width="1.2" filter="url(#glow)"/>
+  <text x="1345" y="332" text-anchor="middle" fill="#e0f0ff" font-size="14" font-weight="600">FastAPI Server</text>
+  <text x="1345" y="354" text-anchor="middle" fill="#6a8caa" font-size="12">(:8000)</text>
+
+  <!-- Arrow: Virtuoso → FastAPI -->
+  <polyline points="1138,490 1200,490 1200,340 1258,340" fill="none" stroke="#7eb8da" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===================== SUMMARY WORKER ===================== -->
+  <rect x="1260" y="590" width="170" height="70" rx="8" fill="url(#boxGrad)" stroke="#3a5a7c" stroke-width="1.2" filter="url(#glow)"/>
+  <text x="1345" y="622" text-anchor="middle" fill="#e0f0ff" font-size="14" font-weight="600">Summary Worker</text>
+  <text x="1345" y="644" text-anchor="middle" fill="#6a8caa" font-size="12">(Daily Brief)</text>
+
+  <!-- Arrow: Virtuoso → Summary Worker -->
+  <polyline points="1138,520 1200,520 1200,625 1258,625" fill="none" stroke="#7eb8da" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- ===================== LEGEND ===================== -->
+  <rect x="45" y="680" width="450" height="45" rx="6" fill="#0f1a2e" stroke="#2a3a5c" stroke-width="0.8"/>
+  <text x="65" y="708" fill="#8ab4d4" font-size="12" font-weight="600">Legend:</text>
+  <line x1="130" y1="705" x2="165" y2="705" stroke="#7eb8da" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="178" y="709" fill="#6a8caa" font-size="11">Data flow</text>
+  <rect x="260" y="698" width="16" height="16" rx="3" fill="url(#boxGrad)" stroke="#3a5a7c" stroke-width="0.8"/>
+  <text x="285" y="709" fill="#6a8caa" font-size="11">Service container</text>
+  <text x="400" y="709" fill="#f9a825" font-size="11" font-style="italic">queue_name</text>
+  <text x="400" y="722" fill="#6a8caa" font-size="10">= Redis List queue</text>
+</svg>

@@ -4,19 +4,54 @@
     "description": "Use Case 1: Threat Actor Profiling\n-----------------------------------\nQuestion: \"What malware, attack patterns, and targeted indicators are\nassociated with a given threat actor?\"\n\nScenario: A SOC analyst receives an alert mentioning a known threat group.\nThey need a full capability profile to understand the scope of the threat\nand prioritise detection rules.\n\nThis query retrieves all malware, attack patterns, and indicators linked\nto *every* ThreatActor in the graph, ordered by actor then asset type.\nAnalysts can filter by actor label in the WHERE clause.\n",
     "results": [
       {
-        "actor_label": "cybercriminals",
-        "asset_type": "AttackPattern",
-        "asset_label": "Fraudulent code-signing"
-      },
-      {
-        "actor_label": "cybercriminals",
-        "asset_type": "AttackPattern",
-        "asset_label": "fraudulent code-signing"
-      },
-      {
-        "actor_label": "cybercriminals",
+        "actor_label": "23-year-old Ottawa man",
         "asset_type": "Malware",
-        "asset_label": "malware-signing-as-a-service (MSaaS)"
+        "asset_label": "Kimwolf"
+      },
+      {
+        "actor_label": "Interlock",
+        "asset_type": "Malware",
+        "asset_label": "Interlock ransomware"
+      },
+      {
+        "actor_label": "Kimsuky",
+        "asset_type": "AttackPattern",
+        "asset_label": "social engineering"
+      },
+      {
+        "actor_label": "North Carolina man",
+        "asset_type": "AttackPattern",
+        "asset_label": "selling personal information"
+      },
+      {
+        "actor_label": "Scattered Spider",
+        "asset_type": "AttackPattern",
+        "asset_label": "Phishing"
+      },
+      {
+        "actor_label": "Scattered Spider",
+        "asset_type": "AttackPattern",
+        "asset_label": "phishing"
+      },
+      {
+        "actor_label": "Threat actors",
+        "asset_type": "Malware",
+        "asset_label": "credential-stealing malware"
+      },
+      {
+        "actor_label": "Threat actors",
+        "asset_type": "Malware",
+        "asset_label": "malware"
+      },
+      {
+        "actor_label": "UNC1549",
+        "asset_type": "AttackPattern",
+        "asset_label": "credential theft"
+      },
+      {
+        "actor_label": "UNC1549",
+        "asset_type": "AttackPattern",
+        "asset_label": "spear-phishing"
       }
     ]
   },
@@ -25,16 +60,42 @@
     "description": "Use Case 2: Vulnerability-to-Threat-Actor Tracing\n--------------------------------------------------\nQuestion: \"Which threat actors are actively exploiting known vulnerabilities\nin our graph, and what other tools or IOCs do those actors use?\"\n\nScenario: The CISO receives a vendor advisory for a newly-patched\nvulnerability. Before patching, the security team queries the CSKG to\nidentify whether any tracked threat actors are exploiting it, and what\nother indicators or attack tools are associated with those actors.\n\nThe query walks:\n  Vulnerability  <-- stix:exploits --  ThreatActor  --> (IOC / Malware)\n\nNote: Actor labels are resolved via owl:sameAs aliases (canonical nodes\nhold relationships; labelled nodes are linked via owl:sameAs).\n",
     "results": [
       {
-        "actor_label": "unauthenticated attackers",
-        "vuln_label": "ChromaDB FastAPI vulnerability"
+        "actor_label": "Iran-linked actors",
+        "vuln_label": "known, unpatched vulnerabilities"
       },
       {
-        "actor_label": "unauthenticated attackers",
-        "vuln_label": "ChromaDB arbitrary code execution vulnerability"
+        "actor_label": "Russia's military intelligence units",
+        "vuln_label": "known flaws in older Internet routers"
       },
       {
-        "actor_label": "unauthenticated attackers",
-        "vuln_label": "max-severity vulnerability in ChromaDB"
+        "actor_label": "Threat actors",
+        "vuln_label": "FortiClient Endpoint Management Server (EMS) vulnerability",
+        "ioc_label": "credential-stealing malware"
+      },
+      {
+        "actor_label": "Threat actors",
+        "vuln_label": "FortiClient Endpoint Management Server (EMS) vulnerability",
+        "ioc_label": "malware"
+      },
+      {
+        "actor_label": "attackers",
+        "vuln_label": "Sendmail debug command"
+      },
+      {
+        "actor_label": "attackers",
+        "vuln_label": "Sendmail debug command vulnerability"
+      },
+      {
+        "actor_label": "remote attackers",
+        "vuln_label": "SMI Sendmail 4.0 vulnerability"
+      },
+      {
+        "actor_label": "remote attackers",
+        "vuln_label": "SunOS 4.0.x rcp vulnerability"
+      },
+      {
+        "actor_label": "remote attackers",
+        "vuln_label": "Versa Concerto security vulnerabilities"
       }
     ]
   },
@@ -43,52 +104,46 @@
     "description": "Use Case 3: Campaign Timeline & Report Provenance\n--------------------------------------------------\nQuestion: \"When were reports about a threat actor published, and what\nentities (malware, CVEs) did each report mention?\"\n\nScenario: An incident responder is building a timeline for a post-incident\nreview. They need to know which published reports reference the relevant\nthreat actor, what malware and CVEs each report surfaces, and the\nchronological order \u2014 so they can correlate intrusion activity with\npublic disclosure dates.\n\nThe query collects stix:Report nodes, their timestamps, and all entities\nthose reports mention, grouped by actor for narrative coherence.\n",
     "results": [
       {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "malware-signing-as-a-service",
+        "actor_label": "attackers",
+        "report_url": "https://nvd.nist.gov/vuln/detail/CVE-1999-0095",
+        "entity_label": "Remote Code Execution",
         "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
       },
       {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "Malware-signing-as-a-service",
+        "actor_label": "attackers",
+        "report_url": "https://nvd.nist.gov/vuln/detail/CVE-1999-0095",
+        "entity_label": "remote code execution",
         "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
       },
       {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "malware-signing-as-a-service",
-        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
+        "actor_label": "attackers",
+        "report_url": "https://nvd.nist.gov/vuln/detail/CVE-1999-0095",
+        "entity_label": "Sendmail debug command vulnerability",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Vulnerability"
       },
       {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "Malware-signing-as-a-service",
-        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
-      },
-      {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "fraudulent code-signing",
+        "actor_label": "attackers",
+        "report_url": "https://nvd.nist.gov/vuln/detail/CVE-1999-0095",
+        "entity_label": "Command execution",
         "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
       },
       {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "Fraudulent code-signing",
+        "actor_label": "attackers",
+        "report_url": "https://nvd.nist.gov/vuln/detail/CVE-1999-0095",
+        "entity_label": "Sendmail debug command",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Vulnerability"
+      },
+      {
+        "actor_label": "hackers",
+        "report_url": "https://www.bleepingcomputer.com/news/security/palo-alto-globalprotect-vpn-auth-bypass-flaw-now-exploited-in-attacks/",
+        "entity_label": "authentication bypass",
         "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
       },
       {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "malware-signing-as-a-service (MSaaS)",
-        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Malware"
-      },
-      {
-        "actor_label": "cybercriminals",
-        "report_url": "https://www.bleepingcomputer.com/news/security/cybercrime-service-disrupted-for-abusing-microsoft-platform-to-sign-malware/",
-        "entity_label": "code-signing",
-        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#AttackPattern"
+        "actor_label": "hackers",
+        "report_url": "https://www.bleepingcomputer.com/news/security/palo-alto-globalprotect-vpn-auth-bypass-flaw-now-exploited-in-attacks/",
+        "entity_label": "CVE-2026-0257",
+        "entity_type": "http://docs.oasis-open.org/cti/ns/stix#Vulnerability"
       }
     ]
   }
