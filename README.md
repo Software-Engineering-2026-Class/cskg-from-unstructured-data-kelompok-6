@@ -13,7 +13,7 @@ We are Group 6 which includes these amazing guys:
 | Evan Razzan Adytaputra | 24/545257/PA/23166| evanrazzanadytaputra2006-dotcom | 
 
 ## 1. Data Sources
-We used 6 sources in total: 1 from the original implementation and 5 added by this group.
+We used 6 sources in total: 4 from the original implementation and 2 added by this group.
 
 ### 1. TheHackerNews (RSS)
 - Access: `http://feeds.feedburner.com/TheHackersNews`
