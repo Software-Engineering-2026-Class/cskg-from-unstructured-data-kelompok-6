@@ -316,6 +316,7 @@ and can also be run via `python sparql_demos.py`.
 **Scenario:** A SOC analyst receives an alert mentioning a known threat group.
 They need a full capability profile — all malware, attack patterns, and
 targeted indicators linked to that actor — to prioritise detection rules.
+(In other words, an analyst hears about a threat actor (attacker group). What do we know about this attacker? The query retrieves associated malware, attack patterns, and indicators to build a profile of the threat actor).
 
 ```sparql
 PREFIX cskg:   <http://group2.org/cskg/>
@@ -355,7 +356,7 @@ LIMIT 50
 vulnerability. Before patching, the security team queries the CSKG to
 identify which tracked threat actors are actively exploiting it and what
 other tools or IOCs those actors deploy.
-
+(In other words, a new vulnerability is discovered or patched. Who is exploiting this vulnerability? The query identifies threat actors linked to the vulnerability and any related malware or indicators they use.)
 ```sparql
 PREFIX cskg:   <http://group2.org/cskg/>
 PREFIX stix:   <http://docs.oasis-open.org/cti/ns/stix#>
@@ -413,6 +414,7 @@ LIMIT 60
 timeline. They query which published reports reference a threat actor,
 what malware/CVEs each report surfaces, and the chronological order — so
 intrusion activity can be correlated with public disclosure dates.
+(In other words, An incident responder is investigating a cyber campaign. Which reports discuss this attacker and what related entities are mentioned? The query retrieves reports, malware, vulnerabilities, and attack patterns associated with the threat actor to help reconstruct a timeline of events.)
 
 ```sparql
 PREFIX cskg:   <http://group2.org/cskg/>
