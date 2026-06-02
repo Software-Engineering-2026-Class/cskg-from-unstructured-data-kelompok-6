@@ -633,7 +633,12 @@ python kg_stats.py --sparql http://localhost:8890/sparql --out docs/
 start kg_dashboard.html
 ```
 ## 10\. Member Contributions
-
+| Member | NIM | Contributions |
+|---|---|---|
+| Plumz17 (Anders Emmanuel Tan) | 24/541351/PA/22964 | Menambahkan 5 sumber data baru ke scraper; mengupdate model Gemini; menambahkan CWE linking; memperbaiki kueri use case 2; menyelesaikan isu yang kurang lengkap.  |
+| EarlyOcean (Dhimas Early Oceandy) | 24/533508/PA/22584 | Project Manager; mengatur struktur repositori dan koordinasi antar anggota; memperbarui README dan format dokumentasi tim; setup lingkungan development, menjalankan pipeline TheHackerNews end-to-end. |
+| naa2412 (Azhar Maulana) | 24/533487/PA/22582 | Mengembangkan kg_stats.py untuk generasi statistik otomatis; membangun kg_dashboard.html (dashboard interaktif Chart.js); integrasi data statistik ke dashboard |
+| Evan (Evan Razzan Adytaputra) | 24/545257/PA/23166 | Mengimplementasikan cskg_dump.py untuk dump KG dari Virtuoso ke file .ttl, menghasilkan cskg_full_dump.ttl; mengimplementasikan sparql_demos.py dan sparql_demo_ui.html untuk menghasilkan 3 use case; generating KG statistics; dan membuat rangkaian tutorial cara menambahkan sources atau kontribusi  |
 ## 11\. How to add sources or contribute
 ### Reporting Issues
 
