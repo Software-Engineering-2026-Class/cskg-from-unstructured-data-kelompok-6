@@ -745,3 +745,64 @@ New triples will be merged into the existing graph at `http://group2.org/cskg`.
 - Commit messages: use the format `type: short description` where type is one of `feat`, `fix`, `docs`, `refactor`, `test`.
 
 ---
+
+## 12. Pipeline Input/Output Sample
+
+To better understand the pipeline, we have provided an example of the data transformation originating from unstructured data, into extracted entities and relations, and finally become a constructed KG.
+
+## 12.1 Unstructured (from CVE source)
+<img width="2879" height="1225" alt="image" src="https://github.com/user-attachments/assets/3e8542d3-537c-4037-8ab4-15860af059b4" />
+
+```json
+{
+    "title": "GHSA-qp9q-4rh4-m8jc",
+    "link": "https://cve.circl.lu/cve/GHSA-qp9q-4rh4-m8jc",
+    "published": "2026-06-03T03:30:25Z",
+    "content": "Vulnerability: GHSA-qp9q-4rh4-m8jc. CVSS Score: CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:N/I:N/A:L. Summary: A flaw has been found in dask up to 3.0. Affected by this issue is the function nunique_approx of the file dask/dataframe/hyperloglog.py of the component HLL Handler. This manipulation causes resource consumption. The attack is possible to be carried out remotely. A high degree of complexity is needed for the attack. The exploitation is known to be difficult. The pull request to fix this issue awaits acceptance."
+}
+```
+
+## 12.2 Extracted Entities and Relations (created by extractor)
+
+```json
+{
+    "threat_actors": [],
+    "malware": [],
+    "vulnerabilities": [
+        "GHSA-qp9q-4rh4-m8jc"
+    ],
+    "indicators": [],
+    "attack_patterns": [
+        "Resource consumption"
+    ],
+    "relations": [
+        {
+            "subject": "GHSA-qp9q-4rh4-m8jc",
+            "relationship": "targets",
+            "object": "dask"
+        }
+    ]
+}
+```
+
+## 12.3 Constructed KG (created by builder_kg)
+
+```ttl
+@prefix cskg: <http://group2.org/cskg/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix stix: <http://docs.oasis-open.org/cti/ns/stix#> .
+
+<https://cve.circl.lu/cve/GHSA-qp9q-4rh4-m8jc> a stix:Report ;
+    stix:mentions cskg:ghsaqp9q4rh4m8jc,
+        cskg:resourceconsumption ;
+    dcterms:created "2026-06-03T03:30:25Z" .
+
+cskg:ghsaqp9q4rh4m8jc a stix:Vulnerability ;
+    rdfs:label "GHSA-qp9q-4rh4-m8jc" ;
+    stix:targets cskg:dask .
+
+cskg:resourceconsumption a stix:AttackPattern ;
+    rdfs:label "Resource consumption" .
+
+```
