@@ -319,21 +319,23 @@ targeted indicators linked to that actor — to prioritise detection rules.
 (In other words, an analyst hears about a threat actor (attacker group). What do we know about this attacker? The query retrieves associated malware, attack patterns, and indicators to build a profile of the threat actor).
 
 ```sparql
-PREFIX cskg:   <http://group2.org/cskg/>
-PREFIX stix:   <http://docs.oasis-open.org/cti/ns/stix#>
-PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX cskg:  <http://group2.org/cskg/>
+PREFIX stix:  <http://docs.oasis-open.org/cti/ns/stix#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:   <http://www.w3.org/2002/07/owl#>
 
 SELECT DISTINCT ?actor_label ?asset_type ?asset_label
 WHERE {
   GRAPH <http://group2.org/cskg> {
     ?actor a stix:ThreatActor ;
            rdfs:label ?actor_label .
+    ?actor owl:sameAs? ?actor_canonical .
 
-    { ?actor stix:uses ?asset . ?asset a stix:Malware       ; rdfs:label ?asset_label . BIND("Malware"        AS ?asset_type) }
+    { ?actor_canonical stix:uses ?asset .    ?asset a stix:Malware       ; rdfs:label ?asset_label . BIND("Malware"       AS ?asset_type) }
     UNION
-    { ?actor stix:uses ?asset . ?asset a stix:AttackPattern ; rdfs:label ?asset_label . BIND("AttackPattern"  AS ?asset_type) }
+    { ?actor_canonical stix:uses ?asset .    ?asset a stix:AttackPattern ; rdfs:label ?asset_label . BIND("AttackPattern" AS ?asset_type) }
     UNION
-    { ?actor stix:targets ?asset . ?asset a stix:Indicator  ; rdfs:label ?asset_label . BIND("Indicator"      AS ?asset_type) }
+    { ?actor_canonical stix:targets ?asset . ?asset a stix:Indicator     ; rdfs:label ?asset_label . BIND("Indicator"     AS ?asset_type) }
   }
 }
 ORDER BY ?actor_label ?asset_type ?asset_label
@@ -417,11 +419,14 @@ intrusion activity can be correlated with public disclosure dates.
 (In other words, An incident responder is investigating a cyber campaign. Which reports discuss this attacker and what related entities are mentioned? The query retrieves reports, malware, vulnerabilities, and attack patterns associated with the threat actor to help reconstruct a timeline of events.)
 
 ```sparql
-PREFIX cskg:   <http://group2.org/cskg/>
-PREFIX stix:   <http://docs.oasis-open.org/cti/ns/stix#>
-PREFIX rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX stix: <http://docs.oasis-open.org/cti/ns/stix#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-SELECT DISTINCT ?actor_label ?report_url ?entity_label ?entity_type
+SELECT DISTINCT
+    ?actor_label
+    ?report_url
+    ?entity_label
+    ?entity_type
 WHERE {
   GRAPH <http://group2.org/cskg> {
     ?actor a stix:ThreatActor ;
@@ -434,7 +439,6 @@ WHERE {
       ?report stix:mentions ?entity .
       ?entity a ?entity_type ;
               rdfs:label ?entity_label .
-      FILTER(?entity != ?actor)
       FILTER(CONTAINS(str(?entity_type), "stix"))
     }
 
