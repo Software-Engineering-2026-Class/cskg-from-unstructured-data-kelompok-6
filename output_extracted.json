@@ -1,0 +1,18 @@
+{
+    "threat_actors": [],
+    "malware": [],
+    "vulnerabilities": [
+        "GHSA-qp9q-4rh4-m8jc"
+    ],
+    "indicators": [],
+    "attack_patterns": [
+        "Resource consumption"
+    ],
+    "relations": [
+        {
+            "subject": "GHSA-qp9q-4rh4-m8jc",
+            "relationship": "targets",
+            "object": "dask"
+        }
+    ]
+}

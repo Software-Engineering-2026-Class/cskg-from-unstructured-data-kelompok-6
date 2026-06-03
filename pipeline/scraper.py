@@ -4,6 +4,7 @@ import redis
 import json
 import time
 import requests
+from urllib.parse import quote
 
 
 # --- Configuration ---
@@ -79,20 +80,49 @@ def fetch_circl_cve(max_articles=5):
         data = response.json()
         articles = []
         for cve in data[:max_articles]:
-            cve_id = cve.get("cveMetadata", {}).get("cveId", "Unknown CVE")
-            descriptions = cve.get("containers", {}).get("cna", {}).get("descriptions", [])
-            summary = descriptions[0].get("value", "No description.") if descriptions else "No description."
-            metrics = cve.get("containers", {}).get("cna", {}).get("metrics", [])
-            cvss = metrics[0].get("cvssV3_1", {}).get("baseScore", "N/A") if metrics else "N/A"
+            # Try to get CVE ID from different possible fields
+            cve_id = cve.get("id")
+            if not cve_id and "cveMetadata" in cve:
+                cve_id = cve.get("cveMetadata", {}).get("cveId")
+            
+            # If still not found, check aliases
+            if not cve_id and cve.get("aliases"):
+                cve_id = cve["aliases"][0]
+            
+            cve_id = cve_id or "Unknown-CVE"
+            
+            # Try to get description/summary
+            summary = cve.get("details")
+            if not summary and "containers" in cve:
+                descriptions = cve.get("containers", {}).get("cna", {}).get("descriptions", [])
+                summary = descriptions[0].get("value") if descriptions else None
+            
+            summary = summary or "No description."
+            
+            # Try to get CVSS score
+            cvss = "N/A"
+            if "severity" in cve and isinstance(cve["severity"], list):
+                for sev in cve["severity"]:
+                    if sev.get("type", "").startswith("CVSS"):
+                        cvss = sev.get("score", "N/A")
+                        break
+            elif "containers" in cve:
+                metrics = cve.get("containers", {}).get("cna", {}).get("metrics", [])
+                cvss = metrics[0].get("cvssV3_1", {}).get("baseScore", "N/A") if metrics else "N/A"
+
             content = (
                 f"Vulnerability: {cve_id}. "
                 f"CVSS Score: {cvss}. "
                 f"Summary: {summary}"
             )
+            
+            # Ensure the link is a valid URI (no spaces)
+            safe_cve_id = quote(cve_id)
+            
             articles.append({
                 "title": cve_id,
-                "link": f"https://cve.circl.lu/cve/{cve_id}",
-                "published": cve.get("cveMetadata", {}).get("datePublished", "N/A"),
+                "link": f"https://cve.circl.lu/cve/{safe_cve_id}",
+                "published": cve.get("published") or cve.get("cveMetadata", {}).get("datePublished", "N/A"),
                 "content": content,
             })
         return articles

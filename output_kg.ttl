@@ -1,0 +1,17 @@
+@prefix cskg: <http://group2.org/cskg/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix stix: <http://docs.oasis-open.org/cti/ns/stix#> .
+
+<https://cve.circl.lu/cve/GHSA-qp9q-4rh4-m8jc> a stix:Report ;
+    stix:mentions cskg:ghsaqp9q4rh4m8jc,
+        cskg:resourceconsumption ;
+    dcterms:created "2026-06-03T03:30:25Z" .
+
+cskg:ghsaqp9q4rh4m8jc a stix:Vulnerability ;
+    rdfs:label "GHSA-qp9q-4rh4-m8jc" ;
+    stix:targets cskg:dask .
+
+cskg:resourceconsumption a stix:AttackPattern ;
+    rdfs:label "Resource consumption" .
+
