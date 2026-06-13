@@ -244,14 +244,17 @@ WHERE {{
     ?actor a stix:ThreatActor ;
            rdfs:label ?actor_label .
 
+    ?actor owl:sameAs? ?actor_canonical .
+
     ?report a stix:Report ;
-            stix:mentions ?actor .
+            stix:mentions ?actor_canonical .
 
     OPTIONAL {{
       ?report stix:mentions ?entity .
       ?entity a ?entity_type ;
               rdfs:label ?entity_label .
-      FILTER(?entity != ?actor)
+      ?report stix:mentions ?actor_canonical .
+      FILTER(?entity != ?actor_canonical)
       FILTER(CONTAINS(str(?entity_type), "stix"))
     }}
 

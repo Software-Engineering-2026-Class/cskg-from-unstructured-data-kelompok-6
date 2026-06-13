@@ -421,6 +421,7 @@ intrusion activity can be correlated with public disclosure dates.
 ```sparql
 PREFIX stix: <http://docs.oasis-open.org/cti/ns/stix#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl:  <http://www.w3.org/2002/07/owl#>
 
 SELECT DISTINCT
     ?actor_label
@@ -432,14 +433,17 @@ WHERE {
     ?actor a stix:ThreatActor ;
            rdfs:label ?actor_label .
 
+    ?actor owl:sameAs? ?actor_canonical .
+
     ?report a stix:Report ;
-            stix:mentions ?actor .
+            stix:mentions ?actor_canonical .
 
     OPTIONAL {
       ?report stix:mentions ?entity .
       ?entity a ?entity_type ;
               rdfs:label ?entity_label .
-      FILTER(?entity != ?actor)
+      ?report stix:mentions ?actor_canonical .
+      FILTER(?entity != ?actor_canonical)
       FILTER(CONTAINS(str(?entity_type), "stix"))
     }
 

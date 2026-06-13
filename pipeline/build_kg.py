@@ -59,6 +59,20 @@ def build_graph(extractions, existing_graph=None):
         # Keeps original formatting safe for URI
         return namespace[quote(text.replace(" ", "_"))]
 
+    def resolve_entity_uri(text):
+        if not text:
+            return MY_KG["unknown"]
+        cve_match = re.search(r"(CVE-\d{4}-\d{4,})", text, re.IGNORECASE)
+        cwe_match = re.search(r"(CWE-\d+)", text, re.IGNORECASE)
+        if cve_match:
+            cve_id = cve_match.group(1).upper()
+            return SEPSES_CVE[cve_id]
+        elif cwe_match:
+            cwe_id = cwe_match.group(1).upper()
+            return SEPSES_CWE[cwe_id]
+        else:
+            return safe_uri(MY_KG, text)
+
     for item in extractions:
         report_url = item["source_url"]
         entities = item["entities"]
@@ -101,20 +115,7 @@ def build_graph(extractions, existing_graph=None):
             g.add((report_uri, STIX.mentions, malware_uri))
 
         for vuln in entities.get("vulnerabilities") or []:
-            # --- CVE detection: link to SEPSES CVE KG ---
-            cve_match = re.search(r"(CVE-\d{4}-\d{4,})", vuln, re.IGNORECASE)
-            # --- CWE detection: link to SEPSES CWE KG ---
-            cwe_match = re.search(r"(CWE-\d+)", vuln, re.IGNORECASE)
-
-            if cve_match:
-                cve_id = cve_match.group(1).upper()
-                vuln_uri = SEPSES_CVE[cve_id]  # e.g., sepses:CVE-2023-1234
-            elif cwe_match:
-                cwe_id = cwe_match.group(1).upper()
-                vuln_uri = SEPSES_CWE[cwe_id]  # e.g., sepses:CWE-79
-            else:
-                vuln_uri = safe_uri(MY_KG, vuln)
-
+            vuln_uri = resolve_entity_uri(vuln)
             g.add((vuln_uri, RDF.type, STIX.Vulnerability))
             g.add((vuln_uri, RDFS.label, Literal(vuln)))
             g.add((report_uri, STIX.mentions, vuln_uri))
@@ -133,9 +134,9 @@ def build_graph(extractions, existing_graph=None):
 
         # --- 3. Add all relationships as edges ---
         for rel in entities.get("relations") or []:
-            # Important: Relationships use safe_uri, so they attach to the Canonical Node
-            subj_uri = safe_uri(MY_KG, rel["subject"])
-            obj_uri = safe_uri(MY_KG, rel["object"])
+            # Important: Relationships use resolve_entity_uri, so they align with the CVE/CWE namespace logic
+            subj_uri = resolve_entity_uri(rel["subject"])
+            obj_uri = resolve_entity_uri(rel["object"])
 
             relationship_str = rel["relationship"]
             rel_prop = RELATIONSHIP_MAP.get(

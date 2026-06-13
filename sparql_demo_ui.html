@@ -657,6 +657,7 @@
         </div>
         <pre id="q3"><span class="kw">PREFIX</span> <span class="uri">stix:</span>   <span class="str">&lt;http://docs.oasis-open.org/cti/ns/stix#&gt;</span>
 <span class="kw">PREFIX</span> <span class="uri">rdfs:</span>   <span class="str">&lt;http://www.w3.org/2000/01/rdf-schema#&gt;</span>
+<span class="kw">PREFIX</span> <span class="uri">owl:</span>    <span class="str">&lt;http://www.w3.org/2002/07/owl#&gt;</span>
 
 <span class="kw">SELECT DISTINCT</span>
     <span class="var">?actor_label</span>
@@ -668,14 +669,17 @@
     <span class="var">?actor</span> <span class="fn">a</span> <span class="uri">stix:ThreatActor</span> ;
            <span class="uri">rdfs:label</span> <span class="var">?actor_label</span> .
 
+    <span class="var">?actor</span> <span class="uri">owl:sameAs?</span> <span class="var">?actor_canonical</span> .
+
     <span class="var">?report</span> <span class="fn">a</span> <span class="uri">stix:Report</span> ;
-            <span class="uri">stix:mentions</span> <span class="var">?actor</span> .
+            <span class="uri">stix:mentions</span> <span class="var">?actor_canonical</span> .
 
     <span class="kw">OPTIONAL</span> {
       <span class="var">?report</span> <span class="uri">stix:mentions</span> <span class="var">?entity</span> .
       <span class="var">?entity</span> <span class="fn">a</span> <span class="var">?entity_type</span> ;
               <span class="uri">rdfs:label</span> <span class="var">?entity_label</span> .
-      <span class="kw">FILTER</span>(<span class="var">?entity</span> != <span class="var">?actor</span>)
+      <span class="var">?report</span> <span class="uri">stix:mentions</span> <span class="var">?actor_canonical</span> .
+      <span class="kw">FILTER</span>(<span class="var">?entity</span> != <span class="var">?actor_canonical</span>)
       <span class="kw">FILTER</span>(<span class="fn">CONTAINS</span>(<span class="fn">str</span>(<span class="var">?entity_type</span>), <span class="str">"stix"</span>))
     }
 
@@ -756,11 +760,13 @@ LIMIT 60`,
 WHERE {
   GRAPH <${GRAPH}> {
     ?actor a stix:ThreatActor ; rdfs:label ?actor_label .
-    ?report a stix:Report ; stix:mentions ?actor .
+    ?actor owl:sameAs? ?actor_canonical .
+    ?report a stix:Report ; stix:mentions ?actor_canonical .
     OPTIONAL {
       ?report stix:mentions ?entity .
       ?entity a ?entity_type ; rdfs:label ?entity_label .
-      FILTER(?entity != ?actor)
+      ?report stix:mentions ?actor_canonical .
+      FILTER(?entity != ?actor_canonical)
       FILTER(CONTAINS(str(?entity_type), "stix"))
     }
     BIND(str(?report) AS ?report_url)
