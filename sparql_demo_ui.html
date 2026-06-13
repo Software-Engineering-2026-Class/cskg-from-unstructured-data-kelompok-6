@@ -523,13 +523,13 @@
     <div class="uc-header" onclick="toggleUC('uc2')">
       <div class="uc-number">2</div>
       <div class="uc-meta">
-        <h2>CVE-to-IOC Tracing</h2>
-        <p>Given a vulnerable CVE, identify exploiting threat actors and their associated indicators of compromise.</p>
+        <h2>Vulnerability-to-Threat-Actor Tracing</h2>
+        <p>Identify threat actors exploiting vulnerabilities and retrieve their associated attack patterns, malware, or indicators.</p>
         <div class="uc-tags">
           <span class="tag tag-red">Vulnerability</span>
           <span class="tag tag-green">ThreatActor</span>
           <span class="tag tag-blue">Indicator</span>
-          <span class="tag tag-purple">SEPSES Link</span>
+          <span class="tag tag-blue">Malware</span>
         </div>
       </div>
       <span class="chevron">›</span>
@@ -543,18 +543,18 @@
 
       <div class="tab-panel active" data-tab="scenario">
         <div class="scenario-box">
-          <strong>Question:</strong> "For every CVE in the graph, which threat actors exploit it
-          and what IOCs should defenders immediately hunt for?"<br><br>
-          <strong>Scenario:</strong> The CISO receives a vendor advisory. Before patching, security
-          teams want to know whether active threat actors are exploiting it and what observable
-          indicators (file hashes, IPs, domains) they can use for immediate detection. The
-          CVE URI resolves via the linked <em>SEPSES CVE Knowledge Graph</em>.
+          <strong>Question:</strong> "Which threat actors are actively exploiting known vulnerabilities
+          in our graph, and what other tools or IOCs do those actors use?"<br><br>
+          <strong>Scenario:</strong> The CISO receives a vendor advisory for a newly-patched
+          vulnerability. Before patching, the security team queries the CSKG to
+          identify whether any tracked threat actors are exploiting it, and what
+          other indicators or attack tools are associated with those actors.
         </div>
         <ul style="color:var(--muted);font-size:11px;padding-left:18px;line-height:2">
-          <li>Uses <strong>SEPSES URI</strong> — our graph links <code>sepses:CVE-XXXX-XXXX</code> directly</li>
-          <li>Walks <strong>stix:ThreatActor → stix:exploits → stix:Vulnerability</strong></li>
-          <li>Walks <strong>stix:ThreatActor → stix:uses → stix:Indicator</strong> for IOCs</li>
-          <li>OPTIONAL on IOC ensures actors without known IOCs still appear</li>
+          <li>Walks <strong>Vulnerability &lt;-- stix:exploits -- ThreatActor --&gt; (IOC / Malware)</strong></li>
+          <li>Resolves threat actor labels using <code>owl:sameAs</code> aliases (canonical vs raw alias nodes)</li>
+          <li>Uses a <code>UNION</code> to fetch associated malware or indicators</li>
+          <li>OPTIONAL matches on IOC / Malware ensures actors without known tools still appear</li>
         </ul>
       </div>
 
@@ -563,32 +563,41 @@
           <span>SPARQL SELECT</span>
           <button class="copy-btn" onclick="copyQuery('q2')">Copy</button>
         </div>
-        <pre id="q2"><span class="kw">PREFIX</span> <span class="uri">stix:</span>   <span class="str">&lt;http://docs.oasis-open.org/cti/ns/stix#&gt;</span>
+        <pre id="q2"><span class="kw">PREFIX</span> <span class="uri">cskg:</span>   <span class="str">&lt;http://group2.org/cskg/&gt;</span>
+<span class="kw">PREFIX</span> <span class="uri">stix:</span>   <span class="str">&lt;http://docs.oasis-open.org/cti/ns/stix#&gt;</span>
 <span class="kw">PREFIX</span> <span class="uri">rdfs:</span>   <span class="str">&lt;http://www.w3.org/2000/01/rdf-schema#&gt;</span>
-<span class="kw">PREFIX</span> <span class="uri">sepses:</span> <span class="str">&lt;https://w3id.org/sepses/resource/cve/&gt;</span>
+<span class="kw">PREFIX</span> <span class="uri">owl:</span>    <span class="str">&lt;http://www.w3.org/2002/07/owl#&gt;</span>
 
 <span class="kw">SELECT DISTINCT</span>
-    <span class="var">?cve_id</span>
     <span class="var">?actor_label</span>
-    <span class="var">?indicator_label</span>
+    <span class="var">?vuln_label</span>
+    <span class="var">?ioc_label</span>
 <span class="kw">WHERE</span> {
   <span class="kw">GRAPH</span> <span class="str">&lt;http://group2.org/cskg&gt;</span> {
+    <span class="cmt"># Find canonical actor nodes that exploit a vulnerability</span>
     <span class="var">?actor</span> <span class="fn">a</span> <span class="uri">stix:ThreatActor</span> ;
-           <span class="uri">rdfs:label</span> <span class="var">?actor_label</span> ;
-           <span class="uri">stix:exploits</span> <span class="var">?cve</span> .
+           <span class="uri">stix:exploits</span> <span class="var">?vuln</span> .
+    <span class="var">?vuln</span>  <span class="fn">a</span> <span class="uri">stix:Vulnerability</span> ;
+           <span class="uri">rdfs:label</span> <span class="var">?vuln_label</span> .
 
-    <span class="kw">BIND</span>(<span class="fn">REPLACE</span>(<span class="fn">str</span>(<span class="var">?cve</span>),
-         <span class="str">"https://w3id.org/sepses/resource/cve/"</span>,
-         <span class="str">""</span>) <span class="kw">AS</span> <span class="var">?cve_id</span>)
-
+    <span class="cmt"># Resolve actor label: direct label OR via owl:sameAs alias</span>
+    <span class="kw">OPTIONAL</span> { <span class="var">?actor</span> <span class="uri">rdfs:label</span> <span class="var">?lbl_direct</span> . }
     <span class="kw">OPTIONAL</span> {
-      <span class="var">?actor</span> <span class="uri">stix:uses</span> <span class="var">?indicator</span> .
-      <span class="var">?indicator</span> <span class="fn">a</span> <span class="uri">stix:Indicator</span> ;
-                 <span class="uri">rdfs:label</span> <span class="var">?indicator_label</span> .
+      <span class="var">?alias</span> <span class="uri">owl:sameAs</span> <span class="var">?actor</span> ;
+             <span class="uri">rdfs:label</span> <span class="var">?lbl_alias</span> .
+    }
+    <span class="kw">BIND</span>(<span class="fn">COALESCE</span>(<span class="var">?lbl_direct</span>, <span class="var">?lbl_alias</span>,
+         <span class="fn">REPLACE</span>(<span class="fn">str</span>(<span class="var">?actor</span>), <span class="str">"http://group2.org/cskg/"</span>, <span class="str">""</span>)) <span class="kw">AS</span> <span class="var">?actor_label</span>)
+
+    <span class="cmt"># Optional: IOCs or Malware the actor deploys</span>
+    <span class="kw">OPTIONAL</span> {
+      <span class="var">?actor</span> <span class="uri">stix:uses</span> <span class="var">?ioc</span> .
+      { <span class="var">?ioc</span> <span class="fn">a</span> <span class="uri">stix:Indicator</span> . } <span class="kw">UNION</span> { <span class="var">?ioc</span> <span class="fn">a</span> <span class="uri">stix:Malware</span> . }
+      <span class="var">?ioc</span> <span class="uri">rdfs:label</span> <span class="var">?ioc_label</span> .
     }
   }
 }
-<span class="kw">ORDER BY</span> <span class="var">?cve_id</span> <span class="var">?actor_label</span>
+<span class="kw">ORDER BY</span> <span class="var">?actor_label</span> <span class="var">?vuln_label</span>
 <span class="kw">LIMIT</span> 60</pre>
         <button class="run-btn" onclick="runQuery(2)">▶ Execute Query</button>
       </div>
@@ -723,18 +732,24 @@ WHERE {
 ORDER BY ?actor_label ?asset_type ?asset_label
 LIMIT 50`,
 
-  2: `SELECT DISTINCT ?cve_id ?actor_label ?indicator_label
+  2: `SELECT DISTINCT ?actor_label ?vuln_label ?ioc_label
 WHERE {
   GRAPH <${GRAPH}> {
-    ?actor a stix:ThreatActor ; rdfs:label ?actor_label ; stix:exploits ?cve .
-    BIND(REPLACE(str(?cve), "https://w3id.org/sepses/resource/cve/", "") AS ?cve_id)
+    ?actor a stix:ThreatActor ; stix:exploits ?vuln .
+    ?vuln  a stix:Vulnerability ; rdfs:label ?vuln_label .
+    OPTIONAL { ?actor rdfs:label ?lbl_direct . }
     OPTIONAL {
-      ?actor stix:uses ?indicator .
-      ?indicator a stix:Indicator ; rdfs:label ?indicator_label .
+      ?alias owl:sameAs ?actor ; rdfs:label ?lbl_alias .
+    }
+    BIND(COALESCE(?lbl_direct, ?lbl_alias, REPLACE(str(?actor), "http://group2.org/cskg/", "")) AS ?actor_label)
+    OPTIONAL {
+      ?actor stix:uses ?ioc .
+      { ?ioc a stix:Indicator . } UNION { ?ioc a stix:Malware . }
+      ?ioc rdfs:label ?ioc_label .
     }
   }
 }
-ORDER BY ?cve_id ?actor_label
+ORDER BY ?actor_label ?vuln_label
 LIMIT 60`,
 
   3: `SELECT DISTINCT ?actor_label ?report_url ?entity_label ?entity_type

@@ -439,6 +439,7 @@ WHERE {
       ?report stix:mentions ?entity .
       ?entity a ?entity_type ;
               rdfs:label ?entity_label .
+      FILTER(?entity != ?actor)
       FILTER(CONTAINS(str(?entity_type), "stix"))
     }
 
