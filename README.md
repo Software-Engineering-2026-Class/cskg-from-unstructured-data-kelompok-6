@@ -496,6 +496,18 @@ This will connect to the running Virtuoso instance and save the full Knowledge G
 
 ## 8\. How to Run
 
+### Prerequisites
+
+Before starting, make sure the following are installed on your machine:
+
+| Tool | Purpose | Download |
+|---|---|---|
+| **Docker Desktop** | Runs all services (Virtuoso, Redis, API, workers) | https://www.docker.com/products/docker-desktop |
+| **Git** | Clone the repository | https://git-scm.com |
+| **Python 3.10+** | Only needed locally for `sparql_demos.py` and `server/cskg_dump.py` | https://www.python.org |
+
+### Steps
+
 1.  **Clone the repository:**
 
     ```bash
@@ -503,20 +515,29 @@ This will connect to the running Virtuoso instance and save the full Knowledge G
     cd <your-repo-name>
     ```
 
-2.  **Create `.env` file:**
-    This project requires a Google API key for the extractor.
+2.  **Create the `.env` file:**
 
+    Create a file named `.env` in the project root with the following content:
+
+    ```
+    GOOGLE_API_KEY=your_google_api_key_here
+    VIRTUOSO_DBA_PASSWORD=your_virtuoso_password_here
+    SPARQL_ENDPOINT=http://localhost:8890/sparql
+    ```
+
+    * `GOOGLE_API_KEY` — Required for the Gemini LLM extractor. Get one at https://aistudio.google.com/app/apikey
+    * `VIRTUOSO_DBA_PASSWORD` — Password for the Virtuoso database admin account. Choose any secure string.
+    * `SPARQL_ENDPOINT` — Leave as-is for local development.
+
+    **On Windows (PowerShell):**
+    ```powershell
+    New-Item .env
+    notepad .env
+    ```
+
+    **On Linux / macOS:**
     ```bash
-    # Copy the example .env file
-    # (Note: You'll need to create a .env.example if it's not there)
-    # Create a new file named .env
-    nano .env
-    ```
-
-    Add your API key to the `.env` file:
-
-    ```
-    GOOGLE_API_KEY=YOUR_API_KEY_HERE
+    touch .env && nano .env
     ```
 
 3.  **Build and Run with Docker Compose:**
@@ -526,7 +547,9 @@ This will connect to the running Virtuoso instance and save the full Knowledge G
     ```
 
       * `--build`: Forces Docker to rebuild the image (useful if you change code).
-      * `-d`: Runs in detached mode.
+      * `-d`: Runs in detached mode (in the background).
+
+    The first build may take a few minutes. Once running, the pipeline will automatically start scraping, extracting, and populating the graph.
 
 4.  **Access the Services:**
 
@@ -543,6 +566,12 @@ This will connect to the running Virtuoso instance and save the full Knowledge G
 
     # See just the extractor, builder, and summary worker
     docker compose logs -f extractor graph_builder summary
+    ```
+
+6.  **Stop the stack:**
+
+    ```bash
+    docker compose down
     ```
 
 ## 9\. GitHub Source
@@ -664,9 +693,14 @@ If you find a bug or have a feature request, open a GitHub Issue with:
 
 3. **Test your changes** — make sure the pipeline still runs end-to-end:
    ```bash
-   docker compose up -d
-   python scraper.py && python extractor.py && python rdf_builder.py && python loader.py
-   python kg_stats.py   # confirm the graph loaded correctly
+   # Rebuild and restart all services
+   docker compose up --build -d
+
+   # Confirm the graph is populated (check triple count)
+   curl http://localhost:8000/
+
+   # Optionally regenerate statistics
+   python kg_stats.py --sparql http://localhost:8890/sparql --out docs/
    ```
 
 4. **Commit** with a meaningful message:
@@ -680,53 +714,37 @@ If you find a bug or have a feature request, open a GitHub Issue with:
 
 ### Adding a New CTI Data Source
 
-The most common contribution is adding a new threat intelligence report or feed. Follow these steps:
+The most common contribution is adding a new threat intelligence feed. Follow these steps:
 
-#### 1. Add the source file
+#### 1. Register it in `pipeline/scraper.py`
 
-Place the report in `data/sources/`:
-
-```
-data/sources/new_report.pdf
-```
-
-Supported formats: `.pdf`, `.html`, `.txt`
-
-#### 2. Register it in `scraper.py`
+Add a new entry to the `RSS_FEEDS` dict (for RSS sources) or add a new fetch function (for REST APIs):
 
 ```python
-SOURCES = [
-    # ... existing sources
-    {
-        "name": "Descriptive Name of Report",
-        "path": "data/sources/new_report.pdf",
-        "type": "pdf",
-        "source_url": "https://link-to-original-report.com"
-    },
-]
-```
-
-#### 3. Add entity mappings if needed
-
-If the new source introduces entity labels not already handled, add them to `ENTITY_MAP` in `extractor.py`:
-
-```python
-ENTITY_MAP = {
-    # existing ...
-    "NEW_LABEL": "stix:MatchingClass",
+# For RSS feeds — add to the RSS_FEEDS dict:
+RSS_FEEDS = {
+    # ... existing feeds
+    "NewFeedName": "https://example.com/feed.rss",
 }
+
+# For REST APIs — add a new function following the pattern of
+# fetch_nvd_articles() or fetch_circl_cve() and call it in run_producer()
 ```
 
-#### 4. Re-run the pipeline
+#### 2. Rebuild and restart the stack
 
 ```bash
-python scraper.py
-python extractor.py
-python rdf_builder.py
-python loader.py
+docker compose up --build -d
 ```
 
-New triples will be merged into the existing graph at `http://group2.org/cskg`.
+The `producer` service will pick up the new source on its next scheduled run (every 5 minutes). New triples will be automatically extracted and inserted into the graph at `http://group2.org/cskg`.
+
+#### 3. Verify new data appeared
+
+```bash
+curl http://localhost:8000/
+# Check that total_triples has increased
+```
 
 ---
 
