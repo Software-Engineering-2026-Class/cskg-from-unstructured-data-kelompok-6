@@ -522,7 +522,7 @@ Before starting, make sure the following are installed on your machine:
 
 2.  **Create the `.env` file:**
 
-    Create a file named `.env` in the project root with the following content:
+    Create a file named `.env` in the project root with the following content (as seen in .env.example):
 
     ```
     GOOGLE_API_KEY=your_google_api_key_here
