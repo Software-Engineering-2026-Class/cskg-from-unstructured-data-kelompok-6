@@ -100,6 +100,7 @@ The `RELATIONSHIP_MAP` in `pipeline/build_kg.py` maps LLM-extracted plain-Englis
 ## 3. Pipeline Architecture
 
 This project is built as an event-driven, microservice-based pipeline orchestrated by `docker-compose.yml`.
+<img width="1714" height="918" alt="arch_mrpl" src="https://github.com/user-attachments/assets/64a23a84-75c5-46c0-b8b9-13785a70a2e1" />
 
 1.  **`producer` (`pipeline/scraper.py`)**
     * A Python script that scrapes RSS feeds for new articles.
